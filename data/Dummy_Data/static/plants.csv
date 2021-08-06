@@ -1,0 +1,127 @@
+id,country,tech,fuel,mc_el,g_max,eta,disp,d_max,storage_capacity
+FR_ccgt_gas,FR,ccgt,gas,97.4038576,6541,0.5219875,1,0,0
+FR_ccot_oil,FR,ccot,oil,166.4261703,1640,0.605,1,0,0
+FR_steam_hard coal,FR,steam,hard coal,71.24711445,2930,0.4297,1,0,0
+FR_steam_uran,FR,steam,uran,17.96525901,63130,0.333,1,0,0
+FR_steam_waste,FR,steam,waste,22.09569378,62,0.33,1,0,0
+AT_ccgt_gas,AT,ccgt,gas,112.340535,4320.66,0.442605,1,0,0
+AT_steam_gas,AT,steam,gas,124.0050104,13.5,0.3784,1,0,0
+AT_steam_hard coal,AT,steam,hard coal,75.45953604,469,0.3775,1,0,0
+AT_steam_waste,AT,steam,waste,22.79784689,752,0.33,1,0,0
+BE_ccgt_gas,BE,ccgt,gas,86.73645573,4294.9,0.605,1,0,0
+BE_ccot_oil,BE,ccot,oil,166.3838724,176.6,0.605,1,0,0
+BE_steam_gas,BE,steam,gas,115.4464992,195,0.412,1,0,0
+BE_steam_uran,BE,steam,uran,17.55275901,5919,0.333,1,0,0
+BE_steam_waste,BE,steam,waste,7.2390625,649.4,1,1,0,0
+CH_steam_uran,CH,steam,uran,17.93573668,3430,0.33,1,0,0
+CZ_steam_uran,CZ,steam,uran,18.35275901,2533,0.333,1,0,0
+CZ_steam_waste,CZ,steam,waste,7.338020833,3516,1,1,0,0
+DE_ccgt_gas,DE,ccgt,gas,112.2842802,18788.7,0.438755906,1,0,0
+DE_ccot_oil,DE,ccot,oil,267.4247559,3650.7,0.348416667,1,0,0
+DE_generator_gas,DE,generator,gas,106.94846,42.8,0.4525,1,0,0
+DE_steam_gas,DE,steam,gas,124.36117,5140.4,0.376088991,1,0,0
+DE_steam_hard coal,DE,steam,hard coal,74.89823573,28201.3,0.384601064,1,0,0
+DE_steam_lignite,DE,steam,lignite,55.72668676,20595.6,0.36356,1,0,0
+DE_steam_uran,DE,steam,uran,17.71159875,10800,0.33,1,0,0
+DE_steam_waste,DE,steam,waste,21.95382775,4067.2,0.33,1,0,0
+DK_ccgt_gas,DK,ccgt,gas,110.4597959,530,0.443433333,1,0,0
+DK_ccot_oil,DK,ccot,oil,167.3542006,665,0.605,1,0,0
+DK_steam_hard coal,DK,steam,hard coal,74.20622127,1240,0.3925,1,0,0
+DK_steam_waste,DK,steam,waste,22.80861244,1775,0.33,1,0,0
+ES_ccgt_gas,ES,ccgt,gas,94.93444193,30066.126,0.547591525,1,0,0
+ES_ccot_oil,ES,ccot,oil,166.8452991,2026.721,0.605,1,0,0
+ES_generator_gas,ES,generator,gas,108.2270796,8.151,0.4448,1,0,0
+ES_steam_hard coal,ES,steam,hard coal,75.34721222,6538.154,0.379736842,1,0,0
+ES_steam_lignite,ES,steam,lignite,56.33742121,3081.16,0.351466667,1,0,0
+ES_steam_uran,ES,steam,uran,18.15987461,7572.58,0.33,1,0,0
+ES_steam_waste,ES,steam,waste,14.9907891,3516.495,0.667768595,1,0,0
+IT_ccgt_gas,IT,ccgt,gas,86.92573732,63939.074,0.605,1,0,0
+IT_ccgt_gas,IT,ccgt,gas,86.8016387,14276,0.605,1,0,0
+IT_ccgt_hard coal,IT,ccgt,hard coal,68.79708792,5121,0.462,1,0,0
+IT_ccgt_waste,IT,ccgt,waste,7.288541667,692,1,1,0,0
+NO_ccgt_gas,NO,ccgt,gas,87.70693917,450,0.605,1,0,0
+PL_ccgt_gas,PL,ccgt,gas,86.84715488,485,0.605,1,0,0
+PL_steam_hard coal,PL,steam,hard coal,69.31042126,15257,0.462,1,0,0
+PL_steam_lignite,PL,steam,lignite,53.84488908,9278,0.439,1,0,0
+SE_ccgt_gas,SE,ccgt,gas,87.70925041,708,0.605,1,0,0
+SE_ccot_oil,SE,ccot,oil,167.3352613,1759,0.605,1,0,0
+SE_steam_hard coal,SE,steam,hard coal,69.73042126,130,0.462,1,0,0
+SE_steam_uran,SE,steam,uran,18.44025901,9532,0.333,1,0,0
+SE_steam_waste,SE,steam,waste,8.1921875,382,1,1,0,0
+UK_ccgt_gas,UK,ccgt,gas,108.7088176,32600.3,0.455753922,1,0,0
+UK_ccot_oil,UK,ccot,oil,167.2758604,1310.4,0.605,1,0,0
+UK_steam_hard coal,UK,steam,hard coal,78.44125822,11776,0.347142857,1,0,0
+UK_steam_uran,UK,steam,uran,18.43573668,8918,0.33,1,0,0
+UK_steam_waste,UK,steam,waste,22.77682843,2967.3,0.33,1,0,0
+FR_ccgt_biomass,FR,ccgt,biomass,12.36203091,268.14,0.6,1,0,0
+BE_steam_biomass,BE,steam,biomass,18.25,363,0.4,1,0,0
+CH_ccgt_biomass,CH,ccgt,biomass,12.99595291,40.1898,0.6,1,0,0
+CH_generator_biomass,CH,generator,biomass,24,21,0.3,1,0,0
+CZ_ccgt_biomass,CZ,ccgt,biomass,12.11368653,1482.213,0.6,1,0,0
+DE_ccgt_biomass,DE,ccgt,biomass,12.82655964,7492.661955,0.6,1,0,0
+DE_geothermal_sun,DE,geothermal,sun,0.951484432,39.544,1,1,0,0
+DE_steam_biomass,DE,steam,biomass,19.43454791,841.4,0.38,1,0,0
+DK_ccgt_biomass,DK,ccgt,biomass,12.11184695,195,0.6,1,0,0
+ES_ccgt_biomass,ES,ccgt,biomass,12.04756958,285.146,0.6,1,0,0
+PL_ccgt_biomass,PL,ccgt,biomass,12.98896247,1714.518,0.6,1,0,0
+SE_ccgt_biomass,SE,ccgt,biomass,12.11000736,226,0.6,1,0,0
+UK_ccgt_biomass,UK,ccgt,biomass,12.34334069,9058.6,0.6,1,0,0
+FR_solar_renewable,FR,solar,renewable,0.374481063,11021.66173,1,0,0,0
+FR_wind offshore_renewable,FR,wind offshore,renewable,5.307692308,1000.8,1,0,0,0
+FR_wind onshore_renewable,FR,wind onshore,renewable,1.15818657,16036.06997,1,0,0,0
+AT_solar_renewable,AT,solar,renewable,0.015568429,2246.39,1,0,0,0
+AT_wind onshore_renewable,AT,wind onshore,renewable,1.007348438,3880.455705,1,0,0,0
+BE_solar_renewable,BE,solar,renewable,0.033309196,4182.02,1,0,0,0
+BE_wind offshore_renewable,BE,wind offshore,renewable,5,2310,1,0,0,0
+BE_wind onshore_renewable,BE,wind onshore,renewable,1.01445767,2389.642328,1,0,0,0
+CH_solar_renewable,CH,solar,renewable,0.993482983,2600.5,1,0,0,0
+CH_wind onshore_renewable,CH,wind onshore,renewable,1.404347826,104.575,1,0,0,0
+CZ_solar_renewable,CZ,solar,renewable,0.050325851,2402.33,1,0,0,0
+CZ_wind onshore_renewable,CZ,wind onshore,renewable,1.020667483,600.2,1,0,0,0
+DE_solar_renewable,DE,solar,renewable,0.784214337,50449.03,1,0,0,0
+DE_wind offshore_renewable,DE,wind offshore,renewable,5.5,7264.1,1,0,0,0
+DE_wind onshore_renewable,DE,wind onshore,renewable,1.33219755,52378.45447,1,0,0,0
+DK_solar_renewable,DK,solar,renewable,0.052136133,1115.44,1,0,0,0
+DK_wind offshore_renewable,DK,wind offshore,renewable,5.115384615,2272.1,1,0,0,0
+DK_wind onshore_renewable,DK,wind onshore,renewable,1.021432945,4346.2,1,0,0,0
+ES_solar_renewable,ES,solar,renewable,0.010499638,8965.37,1,0,0,0
+ES_wind onshore_renewable,ES,wind onshore,renewable,1.004745867,26101.6,1,0,0,0
+IT_solar_renewable,IT,solar,renewable,0.958001448,21896.44,1,0,0,0
+IT_wind onshore_renewable,IT,wind onshore,renewable,1.388854868,11175.89958,1,0,0,0
+NL_solar_renewable,NL,solar,renewable,0.97320782,4465.86,1,0,0,0
+NL_wind offshore_renewable,NL,wind offshore,renewable,5.615384615,2374.2,1,0,0,0
+NL_wind onshore_renewable,NL,wind onshore,renewable,1.395284752,5140.2,1,0,0,0
+NO_solar_renewable,NO,solar,renewable,0.987328023,30.65,1,0,0,0
+NO_wind onshore_renewable,NO,wind onshore,renewable,1.401255358,2851.3,1,0,0,0
+PL_solar_renewable,PL,solar,renewable,0.989138306,477.85,1,0,0,0
+PL_wind onshore_renewable,PL,wind onshore,renewable,1.402020821,7050.9,1,0,0,0
+SE_solar_renewable,SE,solar,renewable,0.01339609,742.43,1,0,0,0
+SE_wind offshore_renewable,SE,wind offshore,renewable,5.730769231,190.5,1,0,0,0
+SE_wind onshore_renewable,SE,wind onshore,renewable,1.005970606,6900.6,1,0,0,0
+UK_solar_renewable,UK,solar,renewable,0.998189718,16984.26,1,0,0,0
+UK_wind offshore_renewable,UK,wind offshore,renewable,5.884615385,8230.2,1,0,0,0
+UK_wind onshore_renewable,UK,wind onshore,renewable,1.324678506,16087.3,1,0,0,0
+FR_hydro_psp_water,FR,hydro_psp,water,10.32589286,5304,0.75,1,3480,405708.3987
+FR_hydro_res_water,FR,hydro_res,water,7.182550529,8938.456688,1,1,33,10565543.67
+AT_hydro_psp_water,AT,hydro_psp,water,10.45510204,3582.3,0.75,1,2255,1343532.026
+AT_hydro_res_water,AT,hydro_res,water,7.134036198,5199.52,1,1,224,4554367.153
+BE_hydro_psp_water,BE,hydro_psp,water,10.67857143,1308,0.75,1,1307,5710
+BE_hydro_res_water,BE,hydro_res,water,7.131611316,9.082802548,1,1,0,11689.14707
+CH_hydro_psp_water,CH,hydro_psp,water,10.58571429,4075.3,0.75,1,2444.4,2219240.119
+CH_hydro_res_water,CH,hydro_res,water,7.190028238,9502.9,1,1,0,10275088.04
+CZ_hydro_psp_water,CZ,hydro_psp,water,10.74047619,1172.509552,0.75,1,480,893527.785
+CZ_hydro_res_water,CZ,hydro_res,water,7.121156212,708.4839023,1,1,0,911786.0359
+DE_hydro_psp_water,DE,hydro_psp,water,10.49515306,7880.72,0.75,1,4982,1003059.948
+DE_hydro_res_water,DE,hydro_res,water,7.210127101,189.5,1,1,0,243877.7413
+ES_hydro_psp_water,ES,hydro_psp,water,10.48509317,7564.932,0.75,1,4833,6643636.666
+ES_hydro_res_water,ES,hydro_res,water,7.191054842,8335.15,1,1,0,9656397.027
+IT_hydro_psp_water,IT,hydro_psp,water,10.36590909,7962.6,0.75,1,6675,1467178.816
+IT_hydro_res_water,IT,hydro_res,water,7.197059606,5615.601783,1,1,0,7227019.94
+NO_hydro_psp_water,NO,hydro_psp,water,10.96428571,1344.3,0.75,1,0,4952921.7
+NO_hydro_res_water,NO,hydro_res,water,7.506356593,29803.88,1,1,0,43839809.49
+PL_hydro_psp_water,PL,hydro_psp,water,10.51571429,1705,0.75,1,956,15690
+PL_hydro_res_water,PL,hydro_res,water,7.148160573,412.5063694,1,1,0,413076.8836
+SE_hydro_psp_water,SE,hydro_psp,water,10.43571429,92,0.75,1,36,144189.4117
+SE_hydro_res_water,SE,hydro_res,water,7.18156913,11624.95909,1,1,0,14960785.04
+UK_hydro_psp_water,UK,hydro_psp,water,10.31964286,2905,0.75,1,2828,25430
+UK_hydro_res_water,UK,hydro_res,water,7.176122386,520.5,1,1,0,669859.4423
