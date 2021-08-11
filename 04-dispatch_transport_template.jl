@@ -5,7 +5,7 @@ using DataFrames, CSV
 
 # Preprocessing
 ### data load ###
-datapath = "data/Dummy_Data"
+datapath = joinpath(@__DIR__, "data\\Dummy_Data")
 # datapath = "data"
 
 timeseries_path = joinpath(datapath, "time_series")
@@ -22,13 +22,16 @@ timeseries = Dict(splitext(files)[1] => CSV.read(joinpath(timeseries_path, files
 ### create sets based on input data ###
 
 ### sets ###
-T = 1:size(timeseries["demand_2015"], 1) |> collect
+# T = 1:size(timeseries["demand_2015"], 1) |> collect
+T = 1:240 |> collect
 TECH = unique(plants[:,:id] |> Vector)
 DISP = unique(plants[plants[:,:disp] .== 1, :id])
 NONDISP =  unique(plants[plants[:,:disp] .== 0, :id])
 S = plants[plants[:,:storage_capacity] .!= 0, :id]
 Z = unique(ntc_data[:,:from_country])
-# P = zones[:,:id] |> Vector
+CU = plants[plants[:,:tech] .== "CU", :id] |> Vector
+CU_NEG = plants[plants[:,:tech] .== "CU_neg", :id] |> Vector
+
 ### parameters ###
 
 ### utility functions and mappings ###
@@ -92,10 +95,11 @@ for z in Z
         feed_in_pv[z] = timeseries["pv_2015"][!,z] .* (plants[(plants.country .== z) .& (plants.tech .== "solar"), "g_max"])
     end
     if ("ror" in  plants[(plants.country .== z),"tech"])
-        print("Spam")
-        feed_in_ror[z] = [0.65 for i=1:size(T)[1]] .* (plants[(plants.country .== z) .& (plants.tech .== "ror"), "g_max"])
+        feed_in_ror[z] = [0.65 for i=1:8760] .* (plants[(plants.country .== z) .& (plants.tech .== "ror"), "g_max"])
+        # feed_in_ror[z] = [0.65 for i=1:size(T)[1]] .* (plants[(plants.country .== z) .& (plants.tech .== "ror"), "g_max"])
     end
-    feed_in[z] = [0 for i=1:size(T)[1]]
+    feed_in[z] = [0 for i=1:8760]
+    # feed_in[z] = [0 for i=1:size(T)[1]]
 end
 
 # Summing the different feedins 
@@ -133,20 +137,25 @@ m = Model(Clp.Optimizer)
 
 @variables m begin
     g_max[disp] >= G[disp=DISP, T] >= 0
-    CU[Z,T] >= 0
+    g_max[cu] >= CURT[cu=CU,T] >= 0
+    g_max[cu_neg] >= CURT_NEG[cu_neg=CU_NEG,T] >= 0
     d_max[s] >= D_stor[s=S,T] >= 0
     storage_capacity[s] >= L_stor[s=S,T] >= 0
     EX[z=Z,zz=Z,T] >= 0
 end
 
 @objective(m, Min,
-    sum(mc[disp] * G[disp,t] for disp in DISP, t in T));
+    sum(mc[disp] * G[disp,t] for disp in DISP, t in T)
+    + sum(mc[curt] *CURT[curt,t] for curt in CU, t in T)
+    + sum(mc[curt_neg] *CURT_NEG[curt_neg,t] for curt_neg in CU_NEG, t in T)
+    );
 
 @constraint(m, ElectricityBalance[z=Z, t=T],
     sum(G[disp,t] for disp in intersect(map_country2id[z],DISP))
     + feed_in[z][t]
     - sum(D_stor[s,t] for s in intersect(map_country2id[z],S))
-    # - CU[z,t]
+    + sum(CURT[curt,t] for curt in CU, t in T)
+    + sum(CURT_NEG[curt_neg,t] for curt_neg in CU_NEG, t in T)
     + sum(EX[zz,z,t] - EX[z,zz,t] for zz in Z)
     ==
     elec_demand[z][t])
