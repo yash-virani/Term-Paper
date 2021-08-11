@@ -1,10 +1,7 @@
-using DataFrames
-using Plots
 using JuMP
 using Clp
 using Plots, StatsPlots
 using DataFrames, CSV 
-
 
 # Preprocessing
 ### data load ###
@@ -60,8 +57,15 @@ map_country2id = Dict()
 for z in Z
     map_country2id[z] = (plants[plants.country .== z, "id"])
 end
-map_id2country = dictzip(plants,  :id => :country)
-map_id2tech = dictzip(plants,  :id => :tech)
+# map_id2country = dictzip(plants,  :id => :country)
+# map_id2tech = dictzip(plants,  :id => :tech)
+
+# Hyrdo Inflows
+psp_inflow = coldict(timeseries["hydro_psp_inflow_countries"])
+PSP_list = plants[plants[:,:tech] .== "hydro_psp", :id]
+res_inflow = coldict(timeseries["hydro_res_inflow_countries"])
+RES_list = plants[plants[:,:tech] .== "hydro_res", :id]
+
 ### time series ###
 coldict(df::DataFrame) = Dict(string(name) => Vector(vec) for (name,vec) in pairs(eachcol(df)))
 
@@ -71,6 +75,7 @@ elec_demand = coldict(timeseries["demand_2015"])
 feed_in_wind_off = Dict()
 feed_in_wind_on = Dict()
 feed_in_pv = Dict()
+feed_in_ror = Dict()
 feed_in = Dict()
 
 for z in Z
@@ -100,21 +105,20 @@ feed_in_by_z_nondisp= Dict()
 for x in keys(feed_in_wind_off)
     feed_in_by_z_nondisp[x,"wind offshore"] = feed_in_wind_off[x]
 end
+
 for x in keys(feed_in_wind_on)
     feed_in_by_z_nondisp[x,"wind onshore"] = feed_in_wind_on[x]
 end
+
 for x in keys(feed_in_pv)
     feed_in_by_z_nondisp[x,"solar"] = feed_in_pv[x]
 end
-
-
 
 ### sucessor: give the next index of an array, return 1 for the last element###
 successor(arr, x) = x == length(arr) ? 1 : x + 1
 
 ### ntc ###
 ntc = dictzip(ntc, [:from_country, :to_country] => :ntc)
-for (k,v) in ntc ntc[reverse(k)] = v end
 
 # actual model creation
 ###############################################################################
@@ -150,8 +154,14 @@ end
     ==
     L_stor[s, t]
     + sqrt(eta[s])*D_stor[s,t]
-    - (1/sqrt(eta[s])) * G[s,t])
+    - (1/sqrt(eta[s])) * G[s,t]
+    # + ?(tech(s) == "hydro_psp") psp_inflow[id2zone[s]][t] : 0
+    + sum(psp_inflow[id2zone[hyro]][t] for hydro in intersect(s,PSP_list))
+    # + ?(tech(s) == "hydro_res") res_inflow[id2zone[s]][t] : 0
+    + sum(res_inflow[id2zone[hyro]][t] for hydro in intersect(s,RES_list))
 
+    
+    );
 optimize!(m)
 
 # post processing
@@ -179,8 +189,7 @@ insertcols!(result_G, 2, :zone => [map_id2country[id] for id in result_G[!,:id]]
 insertcols!(result_G, 3, :technology => [map_id2tech[id] for id in result_G[!,:id]])
 
 # Debugging
-result_G[result_G[:,:zone].=="CH",:]
-plants[plants[:,:disp] .== 0, :id]
+
 
 
 # Creating new result DF to collect exchanges between zones
