@@ -63,7 +63,10 @@ for plant_id in plants[:,:id]
     map_id2country[plant_id] = unique((plants[plants.id .== plant_id, "country"]))[1]
 end
 
-
+map_id2tech  = Dict()
+for plant_id in plants[:,:id] 
+    map_id2tech[plant_id] = unique((plants[plants.id .== plant_id, "tech"]))[1]
+end
 # Hyrdo Inflows
 psp_inflow = coldict(timeseries["hydro_psp_inflow_countries"])
 PSP_list = plants[plants[:,:tech] .== "hydro_psp", :id]
@@ -175,7 +178,7 @@ end
     + (s in RES_list  ? res_inflow[map_id2country[s]][t] : 0)
     );
 
-optimize!(m)
+optimize!(m) 
 
 re_L_stor = DataFrame(L_stor, [:id, :hour])
 re_L_stor[re_L_stor[:,:id].==s,:]
@@ -185,6 +188,7 @@ t = T[1]
 # post processing
 ########################################################
 generic_names(len::Int) = [Symbol("x$i") for i in 1:len]
+
 function DataFrame(x::JuMP.Containers.DenseAxisArray,
     names::AbstractVector{Symbol}=generic_names(length(x.axes));
     kwargs...)
@@ -248,7 +252,7 @@ result_feedin = DataFrame(
 gen_by_tech2 = combine(groupby(result_feedin, [:zone, :technology, :hour]),
     :value => sum => :value)
 
-result_CU = DataFrame(CU, [:zone, :hour])
+result_CU = DataFrame(CURT, [:zone, :hour])
 result_CU[!,:technology] .= "curtailment"
 
 result_D = DataFrame(D_stor, [:id, :hour])
