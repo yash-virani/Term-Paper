@@ -27,7 +27,7 @@ TECH = unique(plants[:,:id] |> Vector)
 DISP = unique(plants[plants[:,:disp] .== 1, :id])
 NONDISP =  unique(plants[plants[:,:disp] .== 0, :id])
 S = plants[plants[:,:storage_capacity] .!= 0, :id]
-Z = unique(ntc[:,:from_country])
+Z = unique(ntc_data[:,:from_country])
 # P = zones[:,:id] |> Vector
 ### parameters ###
 
@@ -57,7 +57,7 @@ end
 
 map_id2country = Dict()
 for plant_id in plants[:,:id] 
-    map_id2country[plant_id] = unique((plants[plants.tech .== plant_id, "country"]))
+    map_id2country[plant_id] = unique((plants[plants.id .== plant_id, "country"]))[1]
 end
 
 
@@ -146,7 +146,7 @@ end
     sum(G[disp,t] for disp in intersect(map_country2id[z],DISP))
     + feed_in[z][t]
     - sum(D_stor[s,t] for s in intersect(map_country2id[z],S))
-    - CU[z,t]
+    # - CU[z,t]
     + sum(EX[zz,z,t] - EX[z,zz,t] for zz in Z)
     ==
     elec_demand[z][t])
@@ -167,14 +167,12 @@ end
     );
 
 optimize!(m)
+
 re_L_stor = DataFrame(L_stor, [:id, :hour])
 re_L_stor[re_L_stor[:,:id].==s,:]
 s = S[1]
 t = T[1]
-psp_inflow[map_id2country[s]][t]
-result_G[result_G[:,:id].==s,:]
-sum(res_inflow[map_id2country[hyro]][t] for hydro in intersect(s,RES_list))
-(s in RES_list ? res_inflow[map_id2country[s]][t] : 0 )
+(s in PSP_list ? psp_inflow[map_id2country[s]][t] : 0)
 # post processing
 ########################################################
 generic_names(len::Int) = [Symbol("x$i") for i in 1:len]
