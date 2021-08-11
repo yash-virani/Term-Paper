@@ -12,7 +12,7 @@ timeseries_path = joinpath(datapath, "time_series")
 static_path = joinpath(datapath, "static")
 
 plants =  CSV.read(joinpath(static_path,"plants.csv"), DataFrame)
-ntc =  CSV.read(joinpath(static_path,"ntc.csv"), DataFrame)
+ntc_data =  CSV.read(joinpath(static_path,"ntc.csv"), DataFrame)
 
 
 timeseries = Dict(splitext(files)[1] => CSV.read(joinpath(timeseries_path, files), DataFrame)
@@ -41,6 +41,8 @@ function dictzip(df::DataFrame, x::Pair)
     return zip(dictkeys, dictvalues) |> collect |> Dict
 end
 
+coldict(df::DataFrame) = Dict(string(name) => Vector(vec) for (name,vec) in pairs(eachcol(df)))
+
 ### Static Parameters ###
 mc = dictzip(plants, :id => :mc_el)
 g_max = dictzip(plants, :id => :g_max)
@@ -48,17 +50,16 @@ d_max = dictzip(plants, :id => :d_max)
 eta = dictzip(plants, :id => :eta)
 storage_capacity = dictzip(plants, :id => :storage_capacity)
 
-# map_id2country = dictzip(plants, :id => :country)
 map_country2id = Dict()
 for z in Z
     map_country2id[z] = (plants[plants.country .== z, "id"])
 end
-map_country2id = Dict()
-for z in Z
-    map_country2id[z] = (plants[plants.country .== z, "id"])
+
+map_id2country = Dict()
+for plant_id in plants[:,:id] 
+    map_id2country[plant_id] = unique((plants[plants.tech .== plant_id, "country"]))
 end
-# map_id2country = dictzip(plants,  :id => :country)
-# map_id2tech = dictzip(plants,  :id => :tech)
+
 
 # Hyrdo Inflows
 psp_inflow = coldict(timeseries["hydro_psp_inflow_countries"])
@@ -90,6 +91,10 @@ for z in Z
     if ("solar" in  plants[(plants.country .== z),"tech"]) & (z in names(timeseries["pv_2015"]))
         feed_in_pv[z] = timeseries["pv_2015"][!,z] .* (plants[(plants.country .== z) .& (plants.tech .== "solar"), "g_max"])
     end
+    if ("ror" in  plants[(plants.country .== z),"tech"])
+        print("Spam")
+        feed_in_ror[z] = [0.65 for i=1:size(T)[1]] .* (plants[(plants.country .== z) .& (plants.tech .== "ror"), "g_max"])
+    end
     feed_in[z] = [0 for i=1:size(T)[1]]
 end
 
@@ -98,6 +103,8 @@ for z in Z
     if haskey(feed_in_wind_off, z) feed_in[z] = feed_in[z] .+ feed_in_wind_off[z] end
     if haskey(feed_in_wind_on, z) feed_in[z] = feed_in[z] .+ feed_in_wind_on[z] end
     if haskey(feed_in_pv, z) feed_in[z] = feed_in[z] .+ feed_in_pv[z] end
+    if haskey(feed_in_ror, z) feed_in[z] = feed_in[z] .+ feed_in_ror[z] end
+
 end
 
 feed_in_by_z_nondisp= Dict()
@@ -118,7 +125,7 @@ end
 successor(arr, x) = x == length(arr) ? 1 : x + 1
 
 ### ntc ###
-ntc = dictzip(ntc, [:from_country, :to_country] => :ntc)
+ntc = dictzip(ntc_data, [:from_country, :to_country] => :ntc)
 
 # actual model creation
 ###############################################################################
@@ -156,9 +163,7 @@ end
     + sqrt(eta[s])*D_stor[s,t]
     - (1/sqrt(eta[s])) * G[s,t]
     + (s in PSP_list ? psp_inflow[map_id2country[s]][t] : 0)
-    # + sum(psp_inflow[map_id2country[hyro]][t] for hydro in intersect(s,PSP_list))
     + (s in RES_list  ? res_inflow[map_id2country[s]][t] : 0)
-    # + sum(res_inflow[map_id2country[hyro]][t] for hydro in intersect(s,RES_list))
     );
 
 optimize!(m)
