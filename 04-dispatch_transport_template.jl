@@ -155,15 +155,21 @@ end
     L_stor[s, t]
     + sqrt(eta[s])*D_stor[s,t]
     - (1/sqrt(eta[s])) * G[s,t]
-    # + ?(tech(s) == "hydro_psp") psp_inflow[id2zone[s]][t] : 0
-    + sum(psp_inflow[id2zone[hyro]][t] for hydro in intersect(s,PSP_list))
-    # + ?(tech(s) == "hydro_res") res_inflow[id2zone[s]][t] : 0
-    + sum(res_inflow[id2zone[hyro]][t] for hydro in intersect(s,RES_list))
-
-    
+    + (s in PSP_list ? psp_inflow[map_id2country[s]][t] : 0)
+    # + sum(psp_inflow[map_id2country[hyro]][t] for hydro in intersect(s,PSP_list))
+    + (s in RES_list  ? res_inflow[map_id2country[s]][t] : 0)
+    # + sum(res_inflow[map_id2country[hyro]][t] for hydro in intersect(s,RES_list))
     );
-optimize!(m)
 
+optimize!(m)
+re_L_stor = DataFrame(L_stor, [:id, :hour])
+re_L_stor[re_L_stor[:,:id].==s,:]
+s = S[1]
+t = T[1]
+psp_inflow[map_id2country[s]][t]
+result_G[result_G[:,:id].==s,:]
+sum(res_inflow[map_id2country[hyro]][t] for hydro in intersect(s,RES_list))
+(s in RES_list ? res_inflow[map_id2country[s]][t] : 0 )
 # post processing
 ########################################################
 generic_names(len::Int) = [Symbol("x$i") for i in 1:len]
