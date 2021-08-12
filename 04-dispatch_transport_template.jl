@@ -145,25 +145,26 @@ set_optimizer_attribute(m, "TimeLimit", 600)
 
 @variables m begin
     g_max[disp] >= G[disp=DISP, T] >= 0
-    # g_max[cu] >= CURT[cu=CU,T] >= 0
-    # g_max[cu_neg] >= CURT_NEG[cu_neg=CU_NEG,T] >= 0
     d_max[s] >= D_stor[s=S,T] >= 0
     storage_capacity[s] >= L_stor[s=S,T] >= 0
     EX[z=Z,zz=Z,T] >= 0
+    CU[Z,T] >= 0
+    BALANCE_P[Z,T] >= 0
+
+
 end
 
 @objective(m, Min,
     sum(mc[disp] * G[disp,t] for disp in DISP, t in T)
-    # + sum(mc[curt] *CURT[curt,t] for curt in CU, t in T)
-    # + sum(mc[curt_neg] *CURT_NEG[curt_neg,t] for curt_neg in CU_NEG, t in T)
+    + sum((CU[z,t] + BALANCE_P[z,t])*1000 for z in Z, t in T)
     );
 
 @constraint(m, ElectricityBalance[z=Z, t=T],
     sum(G[disp,t] for disp in intersect(map_country2id[z],DISP))
     + feed_in[z][t]
     - sum(D_stor[s,t] for s in intersect(map_country2id[z],S))
-    # + sum(CURT[curt,t] for curt in CU, t in T)
-    # + sum(CURT_NEG[curt_neg,t] for curt_neg in CU_NEG, t in T)
+    - CU[z,t]
+    + BALANCE_P[z,t]
     + sum(EX[zz,z,t] - EX[z,zz,t] for zz in Z)
     ==
     elec_demand[z][t])
@@ -185,11 +186,7 @@ end
 
 optimize!(m) 
 
-re_L_stor = DataFrame(L_stor, [:id, :hour])
-re_L_stor[re_L_stor[:,:id].==s,:]
-s = S[1]
-t = T[1]
-(s in PSP_list ? psp_inflow[map_id2country[s]][t] : 0)
+
 # post processing
 ########################################################
 generic_names(len::Int) = [Symbol("x$i") for i in 1:len]
