@@ -1,5 +1,5 @@
 using JuMP
-using Clp
+# using Clp
 # import Pkg
 # Pkg.add("Gurobi")
 # Pkg.build("Gurobi")
@@ -25,8 +25,8 @@ timeseries = Dict(splitext(files)[1] => CSV.read(joinpath(timeseries_path, files
 ### create sets based on input data ###
 
 ### sets ###
-# T = 1:size(timeseries["demand_2015"], 1) |> collect
-T = 1:240 |> collect
+T = 1:size(timeseries["demand_2015"], 1) |> collect
+# T = 1:4000 |> collect
 TECH = unique(plants[:,:id] |> Vector)
 DISP = unique(plants[plants[:,:disp] .== 1, :id])
 NONDISP =  unique(plants[plants[:,:disp] .== 0, :id])
@@ -140,13 +140,13 @@ ntc = dictzip(ntc_data, [:from_country, :to_country] => :ntc)
 # actual model creation
 ###############################################################################
 m = Model(Gurobi.Optimizer)
-set_optimizer_attribute(m, "TimeLimit", 300)
+set_optimizer_attribute(m, "TimeLimit", 600)
 
 
 @variables m begin
     g_max[disp] >= G[disp=DISP, T] >= 0
-    g_max[cu] >= CURT[cu=CU,T] >= 0
-    g_max[cu_neg] >= CURT_NEG[cu_neg=CU_NEG,T] >= 0
+    # g_max[cu] >= CURT[cu=CU,T] >= 0
+    # g_max[cu_neg] >= CURT_NEG[cu_neg=CU_NEG,T] >= 0
     d_max[s] >= D_stor[s=S,T] >= 0
     storage_capacity[s] >= L_stor[s=S,T] >= 0
     EX[z=Z,zz=Z,T] >= 0
@@ -154,16 +154,16 @@ end
 
 @objective(m, Min,
     sum(mc[disp] * G[disp,t] for disp in DISP, t in T)
-    + sum(mc[curt] *CURT[curt,t] for curt in CU, t in T)
-    + sum(mc[curt_neg] *CURT_NEG[curt_neg,t] for curt_neg in CU_NEG, t in T)
+    # + sum(mc[curt] *CURT[curt,t] for curt in CU, t in T)
+    # + sum(mc[curt_neg] *CURT_NEG[curt_neg,t] for curt_neg in CU_NEG, t in T)
     );
 
 @constraint(m, ElectricityBalance[z=Z, t=T],
     sum(G[disp,t] for disp in intersect(map_country2id[z],DISP))
     + feed_in[z][t]
     - sum(D_stor[s,t] for s in intersect(map_country2id[z],S))
-    + sum(CURT[curt,t] for curt in CU, t in T)
-    + sum(CURT_NEG[curt_neg,t] for curt_neg in CU_NEG, t in T)
+    # + sum(CURT[curt,t] for curt in CU, t in T)
+    # + sum(CURT_NEG[curt_neg,t] for curt_neg in CU_NEG, t in T)
     + sum(EX[zz,z,t] - EX[z,zz,t] for zz in Z)
     ==
     elec_demand[z][t])
