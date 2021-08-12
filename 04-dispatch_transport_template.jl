@@ -257,8 +257,10 @@ gen_by_tech2 = combine(groupby(result_feedin, [:zone, :technology, :hour]),
 result_CU = DataFrame(CU, [:zone, :hour])
 result_CU[!,:technology] .= "curtailment"
 
+############################### BALANCE_P muss noch im weiteren aufgenommen werden ######################################
 result_BALANCE_P = DataFrame(BALANCE_P, [:zone, :hour])
 result_BALANCE_P[!,:technology] .= "Balancing_Power"
+############################### BALANCE_P muss noch im weiteren aufgenommen werden ######################################
 
 result_D = DataFrame(D_stor, [:id, :hour])
 insertcols!(result_D, 2, :zone => [map_id2country[id] for id in result_D[!,:id]])
