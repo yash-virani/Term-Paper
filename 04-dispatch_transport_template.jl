@@ -254,8 +254,11 @@ result_feedin = DataFrame(
 gen_by_tech2 = combine(groupby(result_feedin, [:zone, :technology, :hour]),
     :value => sum => :value)
 
-result_CU = DataFrame(CURT, [:zone, :hour])
+result_CU = DataFrame(CU, [:zone, :hour])
 result_CU[!,:technology] .= "curtailment"
+
+result_BALANCE_P = DataFrame(BALANCE_P, [:zone, :hour])
+result_BALANCE_P[!,:technology] .= "Balancing_Power"
 
 result_D = DataFrame(D_stor, [:id, :hour])
 insertcols!(result_D, 2, :zone => [map_id2country[id] for id in result_D[!,:id]])
@@ -271,8 +274,8 @@ result_demand = vcat(demand_by_storage, result_CU, electricity_demand)
 
 #added color for exchange (same color as it is clearly visible that export is negative and import positive)
 colordict = Dict(
-    "pv" => :yellow, "wind" => :lightblue, "pumped_hydro" => :darkblue,
-    "battery" => :lightgrey, "p1" => :brown, "p2" => :grey, "demand" => :darkgrey,
+    "solar" => :yellow, "wind offshore" => :lightblue, "wind onshore" => :lightblue, "hydro_psp" => :darkblue, "hydro_res" => :darkblue, "ror" => :blue, 
+    "ccgt" => :lightgrey, "ccot" => :lightgrey,"generator" => :lightgrey, "steam" => :brown, "geothermal" => :pink, "demand" => :darkgrey,
     "curtailment" => :red, "import" => :purple, "export" => :purple) 
 
 function plot_energybalance(df_gen::DataFrame, df_dem::DataFrame, df_ex::DataFrame, z::AbstractString)
