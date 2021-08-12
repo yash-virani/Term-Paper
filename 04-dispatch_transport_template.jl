@@ -1,9 +1,12 @@
 using JuMP
 using Clp
+# import Pkg
+# Pkg.add("Gurobi")
+# Pkg.build("Gurobi")
+using Gurobi
 using Plots, StatsPlots
 using DataFrames, CSV 
-
-# Preprocessing
+#  Preprocessing
 ### data load ###
 datapath = joinpath(@__DIR__, "data\\Dummy_Data")
 # datapath = "data"
@@ -136,7 +139,9 @@ ntc = dictzip(ntc_data, [:from_country, :to_country] => :ntc)
 
 # actual model creation
 ###############################################################################
-m = Model(Clp.Optimizer)
+m = Model(Gurobi.Optimizer)
+set_optimizer_attribute(m, "TimeLimit", 300)
+
 
 @variables m begin
     g_max[disp] >= G[disp=DISP, T] >= 0
