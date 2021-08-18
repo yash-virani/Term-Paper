@@ -338,3 +338,98 @@ println("The average load of the interconnector is: $averageEX")
 fullUtlizationH = length(result_EX_data[result_EX_data.value .==0.5, :].value);
 fullUtlizationPercent = round((fullUtlizationH/length(result_EX_data.value))*100,digits= 2);
 println("The interconnector is fully utilized in $fullUtlizationH hours, which is $fullUtlizationPercent % of the time")
+
+resid_load_data = DataFrame(demand = elec_demand["DE"], feedIn = feed_in["DE"])
+
+
+function plot_ldc(country)
+    dem = elec_demand[country]
+    feed = feed_in[country]
+    wind_off = haskey(feed_in_wind_off, country) ? feed_in_wind_off[country] : zeros(8760)
+    wind_on = haskey(feed_in_wind_on, country) ?  feed_in_wind_on[country] : zeros(8760)
+    pv = haskey(feed_in_pv, country) ?  feed_in_pv[country] : zeros(8760)
+    ror = haskey(feed_in_ror, country) ?  feed_in_ror[country] : zeros(8760)
+    resid_load_data = DataFrame(load = dem,
+                                feedin = feed,
+                                feed_in_wind_off = wind_off,
+                                feed_in_wind_on = wind_on,
+                                feed_in_pv = pv,
+                                feed_in_ror = ror
+                                )
+   
+
+    df_copy = copy(resid_load_data)
+    df_copy[!, :residual_load] = df_copy[!, :load] .- df_copy[!,:feedin]
+    df_copy[!, :load_wo_wind] = df_copy[!, :load] .- df_copy[!,:feed_in_wind_on] .- df_copy[!,:feed_in_wind_off]
+    df_copy[!, :load_wo_wind_pv] = df_copy[!, :load_wo_wind] .- df_copy[!,:feed_in_pv]
+    
+    sorted_load = sort(df_copy[!,:load], rev=true)
+    sorted_residual = sort(df_copy[!,:residual_load], rev=true)
+    sorted_load_wo_wind = sort(df_copy[!,:load_wo_wind], rev=true)
+    sorted_load_wo_wind_pv = sort(df_copy[!,:load_wo_wind_pv], rev=true)
+
+
+    total_load = sum(df_copy[!,:load])
+    rl = df_copy[!,:residual_load]
+    pos_rl = filter(x-> x >= 0, rl)
+    share = sum(rl / total_load)
+    share_pos = sum(pos_rl / total_load)
+    
+    p = plot(
+        sorted_load,
+        color=:black,
+        width=3,
+        label="Load",
+        xlabel="Number of hours",
+        ylabel="MW",
+        fillrange=sorted_load_wo_wind,
+        fillcolor=:lightblue,
+        fillalpha=0.2,
+        leg=:outerbottom,
+        title="Share of nondispatchable generation of total load: $(round(Int, 100*(1 - share))) % \n load covered bei nondispatchable generation: $(round(Int, 100*(1 - share_pos))) %",
+        titlefontsize=6
+    )
+
+    plot!(p,
+        sorted_load_wo_wind,
+        color=:black,
+        width=1,
+        label="Load with wind infeed",
+        xlabel="Number of hours",
+        ylabel="MW",
+        fillrange=sorted_residual,
+        fillcolor=:yellow,
+        fillalpha=0.2)
+
+    plot!(p,
+        sorted_load_wo_wind_pv,
+        color=:black,
+        width=1,
+        label="Load with solar and wind infeed",
+        xlabel="Number of hours",
+        ylabel="MW",
+        fillrange=sorted_residual,
+        fillcolor=:darkblue,
+        fillalpha=0.2)
+
+    plot!(p,
+        sorted_residual,
+        color=:black,
+        width=2,
+        label="Residual load with solar, wind and ror infeed",
+        xlabel="Number of hours",
+        ylabel="MW",
+        fill=0,
+        fillcolor=:red,
+        fillalpha=0.2)
+    
+    hline!([0], width=2, color = :black, label="")
+    
+    return p
+end
+plot_ldc("DE")
+
+list = [0]*8760
+zeros(8760)
+country = "NO"
+elec_demand[country]

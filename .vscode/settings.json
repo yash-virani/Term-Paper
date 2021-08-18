@@ -1,3 +1,4 @@
 {
-    "julia.environmentPath": "c:\\Users\\User\\Documents\\GitHub\\EWMOD\\Term-Paper\\ewmod"
+    "julia.environmentPath": "c:\\Users\\User\\Documents\\GitHub\\EWMOD\\Term-Paper\\ewmod",
+    "jupyter.jupyterServerType": "local"
 }
