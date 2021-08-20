@@ -238,7 +238,6 @@ rename!(res_exp, :from_Z => :zone) # renaming the column to uniform 'zone' label
 result_EX = vcat(res_imp, res_exp)
 
 ##########################################################################
-
 # TABLE 1
 
 plants_mc = dictzip(plants, [:id, :country] => :mc_el)
@@ -308,37 +307,27 @@ for (id,t) in keys(dict_DE)
     dict_DE[id,t] *= plants_mc_id[id]
 end
 
+
 #Standardabweichung der täglichen Kosten in Deutschland 
 #--> Eigentlich müssten die nicht prod. TECH rausgenommen weren (verfälscht)
 sqrt(var(collect(values(dict_DE))))
 
-# TEST Variance
-# Generation (values) for each id
 
-# VAR(Value * mc[id]) / total_annual_z
-# include in table1
-# c_DE = (result_G_TEST[findall(x -> occursin("DE",x), result_G_TEST[!,:zone]),:])
-# c_DE_dict = dictzip(c_DE,)
-
-
-
-# getindex(find_DE[!,"DE_steam_hard coal","DE", 1])
-
-
-# test1 = dictzip(test, [:zone, :id, :hour] => :value)
-
-# test1["DE", "DE_steam_hard coal", 569] = test1["DE", "DE_steam_hard coal", 569]*plants_mc["DE_steam_hard coal","DE"]
-
-
-# find_DE[!,:value]
-
-# final = Array{Dict}(undef,14)
-# find = DataFrame()
-# for z in Z, i in 1:14
-#     find[!,z] = result_G_TEST[findall(x -> occursin(z,x), result_G_TEST[!,:zone]),:]
-#     final[i] = dictzip(find[z], [:id,:zone, :hour] => :value)
-# end
 ##########################################################################
+# MC Cost per Zone
+
+id_per_t = dictzip(result_G_TEST, [:zone, :hour, :id] => :value)
+
+findmax(collect(("UK",3064,id) in keys(id_per_t) && id_per_t["UK",3064,id] > 0 ? plants_mc_id[id] : 0 for id in result_G_TEST.id))
+
+mc = Dict()
+for z in Z
+    for t in T
+        test = collect(("UK",3064,id) in keys(id_per_t) && id_per_t["UK",3064,id] > 0 ? id_per_t["UK",3064,id] : 0 for id in result_G_TEST.id)
+        mc[z,t] => (findmax(test))
+    end
+end
+
 # TEST
 
 # countries= DataFrame(
@@ -512,7 +501,7 @@ function plot_energybalance(df_gen::DataFrame, df_dem::DataFrame, df_ex::DataFra
     hline!(p, [0], color=:black, label="", width=2)
 
     # added new table, labels and color specification  for plotting
-    table_ex = unstack(df_exchange, :hour, :technology, :value)
+    table_ex = unstack(df_exchange, :hour, :technology, :value, allowduplicates = true)
     labels = names(table_ex[:,Not(:hour)]) |> permutedims
     colors = [colordict[tech] for tech in labels]
     data_ex = Array(table_ex[:,Not(:hour)])
@@ -525,10 +514,9 @@ end
 result_generation[result_generation[:,:zone] .== "DE",:]
 
 
-z1 = plot_energybalance(result_generation, result_demand, result_EX,"DE");
-savefig("results_z1.pdf")
-z2 = plot_energybalance(result_generation, result_demand, result_EX, "z2");
-savefig("results_z2.pdf")
+z1 = plot_energybalance(result_generation, result_demand, result_EX, "DE");
+# savefig("results_z1.pdf")
+
 
 df_exchange = filter(x-> x.zone == "z1", result_EX)
 
