@@ -241,10 +241,17 @@ result_EX = vcat(res_imp, res_exp)
 
 # TABLE 1
 
+plants_mc = dictzip(plants, [:id, :country] => :mc_el)
+
+plants_mc_id = dictzip(plants, :id => :mc_el )
+#manipulate result_G
+result_G_TEST = copy(result_G)
+result_G_TEST = select!(result_G_TEST, Not(:technology))
+
+
+#production (annual, summer, winter) per id, country
 id_h_value = dictzip(result_G_TEST, [:id,:hour] => :value)
-
 tech_country = dictzip(plants, :id => :country)
-
 # Summer Timing (Astronomical Season): 21. June[171*24 = 4104] - 23. September[265*24 = 6360]
 # Winter Timing (Astronomical Season): 1. Januar - 20. März[78*24 = 1872] ; 22. Dezember - 31. Dezember[10*24 = 240]
 T_s = 4104:6360
@@ -266,36 +273,82 @@ avg_annual_z = dictzip(sum_tech, [:technology, :country] => :value_annual)
 avg_summer_z = dictzip(sum_tech, [:technology, :country] => :value_summer)
 avg_winter_z = dictzip(sum_tech, [:technology, :country] => :value_winter)
 
-# Durchschnittlichen Marginal cost * prodcution
+
+#total annual production in country z
+total_production_z = DataFrame(
+    (country = z,
+    total_gen_annual = sum((id,z) in keys(avg_annual_z) ? avg_annual_z[id,z] : 0 for id in sum_tech.technology),
+    total_gen_summer = sum((id,z) in keys(avg_summer_z) ? avg_summer_z[id,z] : 0 for id in sum_tech.technology),
+    total_gen_winter = sum((id,z) in keys(avg_winter_z) ? avg_winter_z[id,z] : 0 for id in sum_tech.technology)
+    )
+    for z in Z
+)
+
+total_annual_z = dictzip(total_production_z, :country => :total_gen_annual)
+total_summer_z = dictzip(total_production_z, :country => :total_gen_summer)
+total_winter_z = dictzip(total_production_z, :country => :total_gen_winter)
+
+
+# Durchschnittlichen Marginal cost * producution
 # Durchschnittlichen Marginal cost sum(mc_cost*production_technology for Z)/ (production in country Z)
 table1 = DataFrame(
     (zone = z,
-    avg_price_annual= sum((id,z) in keys(avg_annual_z) ? avg_annual_z[id,z] : 0 for id in sum_tech.technology)/8760,
-    avg_price_summer= sum((id,z) in keys(avg_summer_z) ? avg_summer_z[id,z] : 0 for id in sum_tech.technology)/8760,
-    avg_price_winter= sum((id,z) in keys(avg_winter_z) ? avg_winter_z[id,z] : 0 for id in sum_tech.technology)/8760,
+    avg_price_annual= sum((id,z) in keys(avg_annual_z) ? avg_annual_z[id,z]*plants_mc[id,z] : 0 for id in sum_tech.technology)/total_annual_z[z],
+    avg_price_summer= sum((id,z) in keys(avg_summer_z) ? avg_summer_z[id,z]*plants_mc[id,z] : 0 for id in sum_tech.technology)/total_summer_z[z],
+    avg_price_winter= sum((id,z) in keys(avg_winter_z) ? avg_winter_z[id,z]*plants_mc[id,z] : 0 for id in sum_tech.technology)/total_winter_z[z],
     )
     for z in Z
 )
 
 
-result_G_TEST = copy(result_G)
-result_G_TEST = select!(result_G_TEST, Not(:technology))
-# result_G_TEST = select!(result_G_TEST, Not(:id))
-
-zone_value = dictzip(result_G_TEST, [:zone, :hour, :id] => :value)
-
-test = DataFrame()
-for t in T
-    test[!,z] = ss
+# Variance for Germany (DE)
+find_DE = result_G_TEST[findall(x -> occursin("DE",x), result_G_TEST[!,:zone]),:]
+dict_DE = dictzip(find_DE, [:id, :hour] => :value)
+for (id,t) in keys(dict_DE)
+    dict_DE[id,t] *= plants_mc_id[id]
 end
 
-variance = convert(Array, result_G_TEST.value)
+#Standardabweichung der täglichen Kosten in Deutschland 
+#--> Eigentlich müssten die nicht prod. TECH rausgenommen weren (verfälscht)
+sqrt(var(collect(values(dict_DE))))
 
-mc_annual = dictzip(result_G_TEST, [:zone,:hour] => :value)
+# TEST Variance
+# Generation (values) for each id
+
+# VAR(Value * mc[id]) / total_annual_z
+# include in table1
+# c_DE = (result_G_TEST[findall(x -> occursin("DE",x), result_G_TEST[!,:zone]),:])
+# c_DE_dict = dictzip(c_DE,)
 
 
+
+# getindex(find_DE[!,"DE_steam_hard coal","DE", 1])
+
+
+# test1 = dictzip(test, [:zone, :id, :hour] => :value)
+
+# test1["DE", "DE_steam_hard coal", 569] = test1["DE", "DE_steam_hard coal", 569]*plants_mc["DE_steam_hard coal","DE"]
+
+
+# find_DE[!,:value]
+
+# final = Array{Dict}(undef,14)
+# find = DataFrame()
+# for z in Z, i in 1:14
+#     find[!,z] = result_G_TEST[findall(x -> occursin(z,x), result_G_TEST[!,:zone]),:]
+#     final[i] = dictzip(find[z], [:id,:zone, :hour] => :value)
+# end
+##########################################################################
 # TEST
-# plants_mc = dictzip(plants, [:id, :country] => :mc_el)
+
+# countries= DataFrame(
+#     (country = z,
+#     dataframe_z = (result_G_TEST[findall(x -> occursin(z,x), result_G_TEST[!,:zone]),:])
+#     dict_z = dictzip()
+#     )
+#     for z in Z
+# )
+
 
 # result_G_summer = copy(result_G)
 # result_G_summer = filter!(row -> 6360>row.hour>4103 , result_G_TEST)
@@ -353,7 +406,6 @@ table2 = DataFrame(
     for z in Z, zz in Z if z!=zz
 )
 CSV.write("/Users/lukasschirren/desktop/FromTo_ntc_utilisation.csv", table2)
-
 
 
 # TABLE 3
