@@ -1,38 +1,38 @@
 country,tech,g_max
-AT,windonshore,10000
+AT,wind onshore,10000
 AT,solar,15000
-BE,windonshore,5930
-BE,windoffshore,4300
+BE,wind onshore,5930
+BE,wind offshore,4300
 BE,solar,13919
-CH,windonshore,1252
+CH,wind onshore,1252
 CH,solar,11000
-CZ,windonshore,3000
+CZ,wind onshore,3000
 CZ,solar,10500
-DE,windonshore,95501
-DE,windoffshore,17000
+DE,wind onshore,95501
+DE,wind offshore,17000
 DE,solar,109875
-DK,windonshore,5479
-DK,windoffshore,4183
+DK,wind onshore,5479
+DK,wind offshore,4183
 DK,solar,4746
-ES,windonshore,44704
+ES,wind onshore,44704
 ES,solar,44099
-FR,windonshore,44111
-FR,windoffshore,3000
+FR,wind onshore,44111
+FR,wind offshore,3000
 FR,solar,42632
-IT,windonshore,19048
-IT,windoffshore,600
+IT,wind onshore,19048
+IT,wind offshore,600
 IT,solar,49329
-NE,windonshore,8300
-NE,windoffshore,6720
+NE,wind onshore,8300
+NE,wind offshore,6720
 NE,solar,15460
-NO,windonshore,8148
+NO,wind onshore,8148
 NO,solar,2000
-PL,windonshore,11280
-PL,windoffshore,900
+PL,wind onshore,11280
+PL,wind offshore,900
 PL,solar,12192
-SE,windonshore,17804
-SE,windoffshore,350
+SE,wind onshore,17804
+SE,wind offshore,350
 SE,solar,4510
-UK,windonshore,33651
-UK,windoffshore,18665
+UK,wind onshore,33651
+UK,wind offshore,18665
 UK,solar,38419
