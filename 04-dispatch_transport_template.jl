@@ -8,7 +8,7 @@ using Plots, StatsPlots
 using DataFrames, CSV 
 #  Preprocessing
 ### data load ###
-datapath = joinpath(@__DIR__, "data\\Dummy_Data")
+datapath = joinpath(@__DIR__, "data")
 # datapath = "data"
 
 timeseries_path = joinpath(datapath, "time_series")
@@ -17,9 +17,33 @@ static_path = joinpath(datapath, "static")
 plants =  CSV.read(joinpath(static_path,"plants.csv"), DataFrame)
 ntc_data =  CSV.read(joinpath(static_path,"ntc.csv"), DataFrame)
 
+############### switch this on for 2030 renewable capacity values #######################
+renewables_2030 = CSV.read(joinpath(static_path,"renewables_2030.csv"), DataFrame)
+for x in eachrow(plants)
+    for i in eachrow(renewables_2030)
+        if (x.country == i.country) & (x.tech == i.tech) 
+            x["g_max"] =  i[:g_max_2030]
+        end
+    end
+end
+
+##################### Removing certain technologies (add to List "turn_of_fuel" to remove) ######################
+turn_of_fuel = ["uran"]
+for x in eachrow(plants)
+    if x.fuel in turn_of_fuel
+        x["g_max"] =  0
+    end
+    
+end
+#########################################################################################
+
+plants[plants.country .=="DE",:g_max]
+
 
 timeseries = Dict(splitext(files)[1] => CSV.read(joinpath(timeseries_path, files), DataFrame)
     for files in readdir(timeseries_path))
+
+
 
 ######################################################################
 ### create sets based on input data ###
@@ -345,10 +369,10 @@ resid_load_data = DataFrame(demand = elec_demand["DE"], feedIn = feed_in["DE"])
 function plot_ldc(country)
     dem = elec_demand[country]
     feed = feed_in[country]
-    wind_off = haskey(feed_in_wind_off, country) ? feed_in_wind_off[country] : zeros(8760)
-    wind_on = haskey(feed_in_wind_on, country) ?  feed_in_wind_on[country] : zeros(8760)
-    pv = haskey(feed_in_pv, country) ?  feed_in_pv[country] : zeros(8760)
-    ror = haskey(feed_in_ror, country) ?  feed_in_ror[country] : zeros(8760)
+    wind_off = haskey(feed_in_wind_off, country) ? feed_in_wind_off[country] : zeros(length(T))
+    wind_on = haskey(feed_in_wind_on, country) ?  feed_in_wind_on[country] : zeros(length(T))
+    pv = haskey(feed_in_pv, country) ?  feed_in_pv[country] : zeros(length(T))
+    ror = haskey(feed_in_ror, country) ?  feed_in_ror[country] : zeros(length(T))
     resid_load_data = DataFrame(load = dem,
                                 feedin = feed,
                                 feed_in_wind_off = wind_off,
