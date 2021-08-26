@@ -37,11 +37,11 @@ for x in eachrow(plants)
 end
 
 ############### Add new storage tech #######################
-mc_el_sto = 50
-g_max_fac = 1
-eta_sto = 0.9
-d_max_sto = 1
-storage_capacity_fac = 1
+mc_el_sto = 50 # sets the marginal costs of the new storage in EUR per MWh
+g_max_fac = 1 # sets the factor to multiply the max generation by (times cumulated generation capacity in country  divided by 100) 
+eta_sto = 0.9 # sets the efficiency of storing in and out of new storage
+d_max_sto = 1 # sets the factor to multiply the max demand by (times cumulated generation capacity in country divided by 100) 
+storage_capacity_fac = 1 #  # sets the factor to multiply the max demand by (times cumulated generation capacity in country) 
 for zone in unique(ntc_data[:,:from_country])
     sum_gen_cap = sum(plants[plants[:,:country] .== zone, :g_max])
     println(sum_gen_cap)
