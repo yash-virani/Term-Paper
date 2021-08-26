@@ -35,10 +35,31 @@ for x in eachrow(plants)
     end
     
 end
+
+############### Add new storage tech #######################
+mc_el_sto = 50
+g_max_fac = 1
+eta_sto = 0.9
+d_max_sto = 1
+storage_capacity_fac = 1
+for zone in unique(ntc_data[:,:from_country])
+    sum_gen_cap = sum(plants[plants[:,:country] .== zone, :g_max])
+    println(sum_gen_cap)
+    push!(plants,[(zone*"_storage_NA") 
+        zone 
+        "undetermined Storage" 
+        "NA" 
+        mc_el_sto 
+        g_max_sto*(sum_gen_cap/100) 
+        eta_sto 
+        1 
+        d_max_sto*(sum_gen_cap/100) 
+        storage_capacity_fac*sum_gen_cap])
+end
 #########################################################################################
 
-plants[plants.country .=="DE",:g_max]
-
+print(plants[plants.country .=="FR",:])
+storage_df
 
 timeseries = Dict(splitext(files)[1] => CSV.read(joinpath(timeseries_path, files), DataFrame)
     for files in readdir(timeseries_path))
@@ -452,8 +473,3 @@ function plot_ldc(country)
     return p
 end
 plot_ldc("DE")
-
-list = [0]*8760
-zeros(8760)
-country = "NO"
-elec_demand[country]
