@@ -37,10 +37,10 @@ for x in eachrow(plants)
 end
 
 ############### Add new storage tech #######################
-mc_el_sto = 50 # sets the marginal costs of the new storage in EUR per MWh
+mc_el_sto = 20 # sets the marginal costs of the new storage in EUR per MWh
 g_max_fac = 1 # sets the factor to multiply the max generation by (times cumulated generation capacity in country  divided by 100) 
 eta_sto = 0.9 # sets the efficiency of storing in and out of new storage
-d_max_sto = 1 # sets the factor to multiply the max demand by (times cumulated generation capacity in country divided by 100) 
+d_max_fac = 1 # sets the factor to multiply the max demand by (times cumulated generation capacity in country divided by 100) 
 storage_capacity_fac = 1 #  # sets the factor to multiply the max demand by (times cumulated generation capacity in country) 
 for zone in unique(ntc_data[:,:from_country])
     sum_gen_cap = sum(plants[plants[:,:country] .== zone, :g_max])
@@ -50,16 +50,14 @@ for zone in unique(ntc_data[:,:from_country])
         "undetermined Storage" 
         "NA" 
         mc_el_sto 
-        g_max_sto*(sum_gen_cap/100) 
+        g_max_fac*(sum_gen_cap/100) 
         eta_sto 
         1 
-        d_max_sto*(sum_gen_cap/100) 
+        d_max_fac*(sum_gen_cap/100) 
         storage_capacity_fac*sum_gen_cap])
 end
 #########################################################################################
 
-print(plants[plants.country .=="FR",:])
-storage_df
 
 timeseries = Dict(splitext(files)[1] => CSV.read(joinpath(timeseries_path, files), DataFrame)
     for files in readdir(timeseries_path))
@@ -196,12 +194,12 @@ set_optimizer_attribute(m, "TimeLimit", 600)
     CU[Z,T] >= 0
     BALANCE_P[Z,T] >= 0
 
-
 end
 
 @objective(m, Min,
     sum(mc[disp] * G[disp,t] for disp in DISP, t in T)
     + sum((CU[z,t] + BALANCE_P[z,t])*1000 for z in Z, t in T)
+    + sum(EX[z,zz,t] for z in Z, zz in Z, t in T)
     );
 
 @constraint(m, ElectricityBalance[z=Z, t=T],
