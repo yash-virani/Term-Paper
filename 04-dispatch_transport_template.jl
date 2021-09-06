@@ -17,6 +17,50 @@ static_path = joinpath(datapath, "static")
 plants =  CSV.read(joinpath(static_path,"plants.csv"), DataFrame)
 ntc_data =  CSV.read(joinpath(static_path,"ntc.csv"), DataFrame)
 
+<<<<<<< Updated upstream
+=======
+############### switch this on for 2030 renewable capacity values #######################
+renewables_2030 = CSV.read(joinpath(static_path,"renewables_2030.csv"), DataFrame)
+for x in eachrow(plants)
+    for i in eachrow(renewables_2030)
+        if (x.country == i.country) & (x.tech == i.tech) 
+            x["g_max"] =  i[:g_max_2030]
+        end
+    end
+end
+
+##################### Removing certain technologies (add to List "turn_of_fuel" to remove) ######################
+turn_of_fuel = ["uran"]
+for x in eachrow(plants)
+    if x.fuel in turn_of_fuel
+        x["g_max"] =  0
+    end
+    
+end
+
+############### Add new storage tech #######################
+mc_el_sto = 20 # sets the marginal costs of the new storage in EUR per MWh
+g_max_fac = 1 # sets the factor to multiply the max generation by (times cumulated generation capacity in country  divided by 100) 
+eta_sto = 0.9 # sets the efficiency of storing in and out of new storage
+d_max_fac = 1 # sets the factor to multiply the max demand by (times cumulated generation capacity in country divided by 100) 
+storage_capacity_fac = 1 #  # sets the factor to multiply the max demand by (times cumulated generation capacity in country) 
+for zone in unique(ntc_data[:,:from_country])
+    sum_gen_cap = sum(plants[plants[:,:country] .== zone, :g_max])
+    println(sum_gen_cap)
+    push!(plants,[(zone*"_storage_NA") 
+        zone 
+        "undetermined Storage" 
+        "NA" 
+        mc_el_sto 
+        g_max_fac*(sum_gen_cap/100) 
+        eta_sto 
+        1 
+        d_max_fac*(sum_gen_cap/100) 
+        storage_capacity_fac * sum_gen_cap])
+end
+#########################################################################################
+
+>>>>>>> Stashed changes
 
 timeseries = Dict(splitext(files)[1] => CSV.read(joinpath(timeseries_path, files), DataFrame)
     for files in readdir(timeseries_path))
@@ -342,7 +386,7 @@ println("The interconnector is fully utilized in $fullUtlizationH hours, which i
 resid_load_data = DataFrame(demand = elec_demand["DE"], feedIn = feed_in["DE"])
 
 
-function plot_ldc(country)
+function plot_ldc(country, )
     dem = elec_demand[country]
     feed = feed_in[country]
     wind_off = haskey(feed_in_wind_off, country) ? feed_in_wind_off[country] : zeros(8760)
@@ -429,7 +473,103 @@ function plot_ldc(country)
 end
 plot_ldc("DE")
 
+<<<<<<< Updated upstream
 list = [0]*8760
 zeros(8760)
 country = "NO"
 elec_demand[country]
+=======
+
+
+
+
+##########################################3
+
+dem = elec_demand[country]
+feed = feed_in[country]
+wind_off = haskey(feed_in_wind_off, country) ? feed_in_wind_off[country] : zeros(length(T))
+wind_on = haskey(feed_in_wind_on, country) ?  feed_in_wind_on[country] : zeros(length(T))
+pv = haskey(feed_in_pv, country) ?  feed_in_pv[country] : zeros(length(T))
+ror = haskey(feed_in_ror, country) ?  feed_in_ror[country] : zeros(length(T))
+
+function plot_ldc2(dem, feed, wind_off, wind_on, pv, ror)
+    
+    resid_load_data = DataFrame(load = dem,
+                                feedin = feed,
+                                feed_in_wind_off = wind_off,
+                                feed_in_wind_on = wind_on,
+                                feed_in_pv = pv,
+                                feed_in_ror = ror
+                                )
+   
+
+    df_copy = copy(resid_load_data)
+    df_copy[!, :residual_load] = df_copy[!, :load] .- df_copy[!,:feedin]
+    df_copy[!, :load_wo_wind] = df_copy[!, :load] .- df_copy[!,:feed_in_wind_on] .- df_copy[!,:feed_in_wind_off]
+    df_copy[!, :load_wo_wind_pv] = df_copy[!, :load_wo_wind] .- df_copy[!,:feed_in_pv]
+    
+    sorted_load = sort(df_copy[!,:load], rev=true)
+    sorted_residual = sort(df_copy[!,:residual_load], rev=true)
+    sorted_load_wo_wind = sort(df_copy[!,:load_wo_wind], rev=true)
+    sorted_load_wo_wind_pv = sort(df_copy[!,:load_wo_wind_pv], rev=true)
+
+
+    total_load = sum(df_copy[!,:load])
+    rl = df_copy[!,:residual_load]
+    pos_rl = filter(x-> x >= 0, rl)
+    share = sum(rl / total_load)
+    share_pos = sum(pos_rl / total_load)
+    
+    p = plot(
+        sorted_load,
+        color=:black,
+        width=3,
+        label="Load",
+        xlabel="Number of hours",
+        ylabel="MW",
+        fillrange=sorted_load_wo_wind,
+        fillcolor=:lightblue,
+        fillalpha=0.2,
+        leg=:outerbottom,
+        title="Share of nondispatchable generation of total load: $(round(Int, 100*(1 - share))) % \n load covered bei nondispatchable generation: $(round(Int, 100*(1 - share_pos))) %",
+        titlefontsize=6
+    )
+
+    plot!(p,
+        sorted_load_wo_wind,
+        color=:black,
+        width=1,
+        label="Load with wind infeed",
+        xlabel="Number of hours",
+        ylabel="MW",
+        fillrange=sorted_residual,
+        fillcolor=:yellow,
+        fillalpha=0.2)
+
+    plot!(p,
+        sorted_load_wo_wind_pv,
+        color=:black,
+        width=1,
+        label="Load with solar and wind infeed",
+        xlabel="Number of hours",
+        ylabel="MW",
+        fillrange=sorted_residual,
+        fillcolor=:darkblue,
+        fillalpha=0.2)
+
+    plot!(p,
+        sorted_residual,
+        color=:black,
+        width=2,
+        label="Residual load with solar, wind and ror infeed",
+        xlabel="Number of hours",
+        ylabel="MW",
+        fill=0,
+        fillcolor=:red,
+        fillalpha=0.2)
+    
+    hline!([0], width=2, color = :black, label="")
+    
+    return p
+end
+>>>>>>> Stashed changes
