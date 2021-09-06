@@ -23,11 +23,9 @@ function run_model(enable_2030::Bool, remove_fuels_list::Vector, ntc_factor,extr
     ############### switch this on for 2030 renewable capacity values #######################
     if enable_2030 == true
         renewables_2030 = CSV.read(joinpath(static_path,"renewables_2030.csv"), DataFrame)
-        for x in eachrow(plants)
-            for i in eachrow(renewables_2030)
-                if (x.country == i.country) & (x.tech == i.tech) 
-                    x["g_max"] =  i[:g_max_2030]
-                end
+        for x in eachrow(plants), i in eachrow(renewables_2030)
+            if (x.country == i.country) & (x.tech == i.tech) 
+                x["g_max"] =  i[:g_max_2030]
             end
         end
     end
@@ -139,12 +137,12 @@ function run_model(enable_2030::Bool, remove_fuels_list::Vector, ntc_factor,extr
     feed_in = Dict()
 
     for z in Z
-        if ("wind onshore" in  plants[(plants.country .== z),"tech"]) & (z in names(timeseries["wind_on_2015"]))
-            feed_in_wind_off[z] = timeseries["wind_on_2015"][!,z] .* (plants[(plants.country .== z) .& (plants.tech .== "wind onshore"), "g_max"])
+        if ("wind_onshore" in  plants[(plants.country .== z),"tech"]) & (z in names(timeseries["wind_on_2015"]))
+            feed_in_wind_off[z] = timeseries["wind_on_2015"][!,z] .* (plants[(plants.country .== z) .& (plants.tech .== "wind_onshore"), "g_max"])
         end
 
-        if ("wind offshore" in  plants[(plants.country .== z),"tech"]) & (z in names(timeseries["wind_off_2015"]))
-            feed_in_wind_on[z] = timeseries["wind_off_2015"][!,z] .* (plants[(plants.country .== z) .& (plants.tech .== "wind offshore"), "g_max"])
+        if ("wind_offshore" in  plants[(plants.country .== z),"tech"]) & (z in names(timeseries["wind_off_2015"]))
+            feed_in_wind_on[z] = timeseries["wind_off_2015"][!,z] .* (plants[(plants.country .== z) .& (plants.tech .== "wind_offshore"), "g_max"])
         end
 
         if ("solar" in  plants[(plants.country .== z),"tech"]) & (z in names(timeseries["pv_2015"]))
@@ -170,11 +168,11 @@ function run_model(enable_2030::Bool, remove_fuels_list::Vector, ntc_factor,extr
     feed_in_by_z_nondisp= Dict()
 
     for x in keys(feed_in_wind_off)
-        feed_in_by_z_nondisp[x,"wind offshore"] = feed_in_wind_off[x]
+        feed_in_by_z_nondisp[x,"wind_offshore"] = feed_in_wind_off[x]
     end
 
     for x in keys(feed_in_wind_on)
-        feed_in_by_z_nondisp[x,"wind onshore"] = feed_in_wind_on[x]
+        feed_in_by_z_nondisp[x,"wind_onshore"] = feed_in_wind_on[x]
     end
 
     for x in keys(feed_in_pv)

@@ -8,8 +8,8 @@ using Plots, StatsPlots
 using DataFrames, CSV 
 #  Preprocessing
 ### data load ###
-datapath = joinpath(@__DIR__, "data\\Dummy_Data")
-# datapath = "data"
+# datapath = joinpath(@__DIR__, "data\\Dummy_Data")
+datapath = joinpath(@__DIR__, "data")
 
 timeseries_path = joinpath(datapath, "time_series")
 static_path = joinpath(datapath, "static")
@@ -17,50 +17,45 @@ static_path = joinpath(datapath, "static")
 plants =  CSV.read(joinpath(static_path,"plants.csv"), DataFrame)
 ntc_data =  CSV.read(joinpath(static_path,"ntc.csv"), DataFrame)
 
-<<<<<<< Updated upstream
-=======
 ############### switch this on for 2030 renewable capacity values #######################
 renewables_2030 = CSV.read(joinpath(static_path,"renewables_2030.csv"), DataFrame)
-for x in eachrow(plants)
-    for i in eachrow(renewables_2030)
-        if (x.country == i.country) & (x.tech == i.tech) 
-            x["g_max"] =  i[:g_max_2030]
-        end
+for x in eachrow(plants), i in eachrow(renewables_2030)
+    if (x.country == i.country) & (x.tech == i.tech) 
+        x["g_max"] =  i[:g_max_2030]
     end
 end
 
 ##################### Removing certain technologies (add to List "turn_of_fuel" to remove) ######################
-turn_of_fuel = ["uran"]
-for x in eachrow(plants)
-    if x.fuel in turn_of_fuel
-        x["g_max"] =  0
-    end
+# turn_of_fuel = ["uran"]
+# for x in eachrow(plants)
+#     if x.fuel in turn_of_fuel
+#         x["g_max"] =  0
+#     end
     
-end
+# end
 
 ############### Add new storage tech #######################
-mc_el_sto = 20 # sets the marginal costs of the new storage in EUR per MWh
-g_max_fac = 1 # sets the factor to multiply the max generation by (times cumulated generation capacity in country  divided by 100) 
-eta_sto = 0.9 # sets the efficiency of storing in and out of new storage
-d_max_fac = 1 # sets the factor to multiply the max demand by (times cumulated generation capacity in country divided by 100) 
-storage_capacity_fac = 1 #  # sets the factor to multiply the max demand by (times cumulated generation capacity in country) 
-for zone in unique(ntc_data[:,:from_country])
-    sum_gen_cap = sum(plants[plants[:,:country] .== zone, :g_max])
-    println(sum_gen_cap)
-    push!(plants,[(zone*"_storage_NA") 
-        zone 
-        "undetermined Storage" 
-        "NA" 
-        mc_el_sto 
-        g_max_fac*(sum_gen_cap/100) 
-        eta_sto 
-        1 
-        d_max_fac*(sum_gen_cap/100) 
-        storage_capacity_fac * sum_gen_cap])
-end
+# mc_el_sto = 20 # sets the marginal costs of the new storage in EUR per MWh
+# g_max_fac = 1 # sets the factor to multiply the max generation by (times cumulated generation capacity in country  divided by 100) 
+# eta_sto = 0.9 # sets the efficiency of storing in and out of new storage
+# d_max_fac = 1 # sets the factor to multiply the max demand by (times cumulated generation capacity in country divided by 100) 
+# storage_capacity_fac = 1 #  # sets the factor to multiply the max demand by (times cumulated generation capacity in country) 
+# for zone in unique(ntc_data[:,:from_country])
+#     sum_gen_cap = sum(plants[plants[:,:country] .== zone, :g_max])
+#     println(sum_gen_cap)
+#     push!(plants,[(zone*"_storage_NA") 
+#         zone 
+#         "undetermined Storage" 
+#         "NA" 
+#         mc_el_sto 
+#         g_max_fac*(sum_gen_cap/100) 
+#         eta_sto 
+#         1 
+#         d_max_fac*(sum_gen_cap/100) 
+#         storage_capacity_fac * sum_gen_cap])
+# end
 #########################################################################################
 
->>>>>>> Stashed changes
 
 timeseries = Dict(splitext(files)[1] => CSV.read(joinpath(timeseries_path, files), DataFrame)
     for files in readdir(timeseries_path))
@@ -70,7 +65,7 @@ timeseries = Dict(splitext(files)[1] => CSV.read(joinpath(timeseries_path, files
 
 ### sets ###
 T = 1:size(timeseries["demand_2015"], 1) |> collect
-# T = 1:4000 |> collect
+# T = 1:700 |> collect
 TECH = unique(plants[:,:id] |> Vector)
 DISP = unique(plants[plants[:,:disp] .== 1, :id])
 NONDISP =  unique(plants[plants[:,:disp] .== 0, :id])
@@ -112,7 +107,7 @@ end
 
 map_id2tech  = Dict()
 for plant_id in plants[:,:id] 
-    map_id2tech[plant_id] = unique((plants[plants.id .== plant_id, "tech"]))[1]
+    map_id2tech[plant_id] = ((plants[plants.id .== plant_id, "tech"]))[1]
 end
 # Hyrdo Inflows
 psp_inflow = coldict(timeseries["hydro_psp_inflow_countries"])
@@ -133,12 +128,12 @@ feed_in_ror = Dict()
 feed_in = Dict()
 
 for z in Z
-    if ("wind onshore" in  plants[(plants.country .== z),"tech"]) & (z in names(timeseries["wind_on_2015"]))
-        feed_in_wind_off[z] = timeseries["wind_on_2015"][!,z] .* (plants[(plants.country .== z) .& (plants.tech .== "wind onshore"), "g_max"])
+    if ("wind_onshore" in  plants[(plants.country .== z),"tech"]) & (z in names(timeseries["wind_on_2015"]))
+        feed_in_wind_off[z] = timeseries["wind_on_2015"][!,z] .* (plants[(plants.country .== z) .& (plants.tech .== "wind_onshore"), "g_max"])
     end
 
-    if ("wind offshore" in  plants[(plants.country .== z),"tech"]) & (z in names(timeseries["wind_off_2015"]))
-        feed_in_wind_on[z] = timeseries["wind_off_2015"][!,z] .* (plants[(plants.country .== z) .& (plants.tech .== "wind offshore"), "g_max"])
+    if ("wind_offshore" in  plants[(plants.country .== z),"tech"]) & (z in names(timeseries["wind_off_2015"]))
+        feed_in_wind_on[z] = timeseries["wind_off_2015"][!,z] .* (plants[(plants.country .== z) .& (plants.tech .== "wind_offshore"), "g_max"])
     end
 
     if ("solar" in  plants[(plants.country .== z),"tech"]) & (z in names(timeseries["pv_2015"]))
@@ -164,11 +159,11 @@ end
 feed_in_by_z_nondisp= Dict()
 
 for x in keys(feed_in_wind_off)
-    feed_in_by_z_nondisp[x,"wind offshore"] = feed_in_wind_off[x]
+    feed_in_by_z_nondisp[x,"wind_offshore"] = feed_in_wind_off[x]
 end
 
 for x in keys(feed_in_wind_on)
-    feed_in_by_z_nondisp[x,"wind onshore"] = feed_in_wind_on[x]
+    feed_in_by_z_nondisp[x,"wind_onshore"] = feed_in_wind_on[x]
 end
 
 for x in keys(feed_in_pv)
@@ -291,12 +286,13 @@ result_feedin = DataFrame(
         zone=map_id2country[id],
         technology=map_id2tech[id],
         hour=t,
-        value=haskey(feed_in_by_z_nondisp,[map_id2country[id],map_id2tech[id]]) ?  feed_in_by_z_nondisp[map_id2country[id],map_id2tech[id]][t] : 0
+        value=haskey(feed_in_by_z_nondisp, (map_id2country[id],map_id2tech[id])) ?  feed_in_by_z_nondisp[map_id2country[id],map_id2tech[id]][t] : 0
         )
     for id in NONDISP, t in T)
 
 gen_by_tech2 = combine(groupby(result_feedin, [:zone, :technology, :hour]),
     :value => sum => :value)
+
 
 result_CU = DataFrame(CU, [:zone, :hour])
 result_CU[!,:technology] .= "curtailment"
@@ -320,7 +316,7 @@ result_demand = vcat(demand_by_storage, result_CU, electricity_demand)
 
 #added color for exchange (same color as it is clearly visible that export is negative and import positive)
 colordict = Dict(
-    "solar" => :yellow, "wind offshore" => :lightblue, "wind onshore" => :lightblue, "hydro_psp" => :darkblue, "hydro_res" => :darkblue, "ror" => :blue, 
+    "solar" => :yellow, "wind_offshore" => :lightblue, "wind_onshore" => :lightblue, "hydro_psp" => :darkblue, "hydro_res" => :darkblue, "ror" => :blue, 
     "ccgt" => :lightgrey, "ccot" => :lightgrey,"generator" => :lightgrey, "steam" => :brown, "geothermal" => :pink, "demand" => :darkgrey,
     "curtailment" => :red, "import" => :purple, "export" => :purple) 
 
@@ -348,20 +344,22 @@ function plot_energybalance(df_gen::DataFrame, df_dem::DataFrame, df_ex::DataFra
     hline!(p, [0], color=:black, label="", width=2)
 
     # added new table, labels and color specification  for plotting
-    table_ex = unstack(df_exchange, :hour, :technology, :value)
+    table_ex = unstack(df_exchange, :hour, :technology, :value, allowduplicates=true)
     labels = names(table_ex[:,Not(:hour)]) |> permutedims
     colors = [colordict[tech] for tech in labels]
     data_ex = Array(table_ex[:,Not(:hour)])
 
-    areaplot!(p, data_ex, label=labels, color=colors, width=0)
+    areaplot!(p, data_ex, label=labels, color=colors, width=0, allowduplicates=true)
 
     return p
 end
 
 result_generation[result_generation[:,:zone] .== "DE",:]
-
-
-z1 = plot_energybalance(result_generation, result_demand, result_EX,"DE");
+endhour = 7*24
+gen_short = result_generation[result_generation[:,:hour] .∈ [1:endhour],:]
+dem_short = result_demand[result_demand[:,:hour] .∈ [1:endhour],:]
+EX_short = result_EX[result_EX[:,:hour] .∈ [1:endhour],:]
+z1 = plot_energybalance(gen_short, dem_short, EX_short,"DE");
 savefig("results_z1.pdf")
 z2 = plot_energybalance(result_generation, result_demand, result_EX, "z2");
 savefig("results_z2.pdf")
@@ -473,12 +471,6 @@ function plot_ldc(country, )
 end
 plot_ldc("DE")
 
-<<<<<<< Updated upstream
-list = [0]*8760
-zeros(8760)
-country = "NO"
-elec_demand[country]
-=======
 
 
 
@@ -572,4 +564,3 @@ function plot_ldc2(dem, feed, wind_off, wind_on, pv, ror)
     
     return p
 end
->>>>>>> Stashed changes

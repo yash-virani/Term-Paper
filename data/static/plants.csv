@@ -65,49 +65,49 @@ SE_ccgt_biomass,SE,ccgt,biomass,12.11000736,226,0.6,1,0,0
 UK_ccgt_biomass,UK,ccgt,biomass,12.34334069,9058.6,0.6,1,0,0
 FR_ror_renewable,FR,ror,renewable,1.803740559,6211.502562,1,0,0,0
 FR_solar_renewable,FR,solar,renewable,0.374481063,11021.66173,1,0,0,0
-FR_wind offshore_renewable,FR,wind offshore,renewable,5.307692308,1000.8,1,0,0,0
-FR_wind onshore_renewable,FR,wind onshore,renewable,1.15818657,16036.06997,1,0,0,0
+FR_wind_offshore_renewable,FR,wind_offshore,renewable,5.307692308,1000.8,1,0,0,0
+FR_wind_onshore_renewable,FR,wind_onshore,renewable,1.15818657,16036.06997,1,0,0,0
 AT_ror_renewable,AT,ror,renewable,1.610681929,4661.3,1,0,0,0
 AT_solar_renewable,AT,solar,renewable,0.015568429,2246.39,1,0,0,0
-AT_wind onshore_renewable,AT,wind onshore,renewable,1.007348438,3880.455705,1,0,0,0
+AT_wind_onshore_renewable,AT,wind_onshore,renewable,1.007348438,3880.455705,1,0,0,0
 BE_ror_renewable,BE,ror,renewable,1.491426822,36.84012397,1,0,0,0
 BE_solar_renewable,BE,solar,renewable,0.033309196,4182.02,1,0,0,0
-BE_wind offshore_renewable,BE,wind offshore,renewable,5,2310,1,0,0,0
-BE_wind onshore_renewable,BE,wind onshore,renewable,1.01445767,2389.642328,1,0,0,0
+BE_wind_offshore_renewable,BE,wind_offshore,renewable,5,2310,1,0,0,0
+BE_wind_onshore_renewable,BE,wind_onshore,renewable,1.01445767,2389.642328,1,0,0,0
 CH_ror_renewable,CH,ror,renewable,1.60627727,4336.409,1,0,0,0
 CH_solar_renewable,CH,solar,renewable,0.993482983,2600.5,1,0,0,0
-CH_wind onshore_renewable,CH,wind onshore,renewable,1.404347826,104.575,1,0,0,0
+CH_wind_onshore_renewable,CH,wind_onshore,renewable,1.404347826,104.575,1,0,0,0
 CZ_ror_renewable,CZ,ror,renewable,1.455450092,40.22638227,1,0,0,0
 CZ_solar_renewable,CZ,solar,renewable,0.050325851,2402.33,1,0,0,0
-CZ_wind onshore_renewable,CZ,wind onshore,renewable,1.020667483,600.2,1,0,0,0
+CZ_wind_onshore_renewable,CZ,wind_onshore,renewable,1.020667483,600.2,1,0,0,0
 DE_ror_renewable,DE,ror,renewable,1.546744234,2365.38,1,0,0,0
 DE_solar_renewable,DE,solar,renewable,0.784214337,50449.03,1,0,0,0
-DE_wind offshore_renewable,DE,wind offshore,renewable,5.5,7264.1,1,0,0,0
-DE_wind onshore_renewable,DE,wind onshore,renewable,1.33219755,52378.45447,1,0,0,0
+DE_wind_offshore_renewable,DE,wind_offshore,renewable,5.5,7264.1,1,0,0,0
+DE_wind_onshore_renewable,DE,wind_onshore,renewable,1.33219755,52378.45447,1,0,0,0
 DK_solar_renewable,DK,solar,renewable,0.052136133,1115.44,1,0,0,0
-DK_wind offshore_renewable,DK,wind offshore,renewable,5.115384615,2272.1,1,0,0,0
-DK_wind onshore_renewable,DK,wind onshore,renewable,1.021432945,4346.2,1,0,0,0
+DK_wind_offshore_renewable,DK,wind_offshore,renewable,5.115384615,2272.1,1,0,0,0
+DK_wind_onshore_renewable,DK,wind_onshore,renewable,1.021432945,4346.2,1,0,0,0
 ES_ror_renewable,ES,ror,renewable,1.883037355,36.65,1,0,0,0
 ES_solar_renewable,ES,solar,renewable,0.010499638,8965.37,1,0,0,0
-ES_wind onshore_renewable,ES,wind onshore,renewable,1.004745867,26101.6,1,0,0,0
+ES_wind_onshore_renewable,ES,wind_onshore,renewable,1.004745867,26101.6,1,0,0,0
 IT_ror_renewable,IT,ror,renewable,1.61326918,5816.69,1,0,0,0
 IT_solar_renewable,IT,solar,renewable,0.958001448,21896.44,1,0,0,0
-IT_wind onshore_renewable,IT,wind onshore,renewable,1.388854868,11175.89958,1,0,0,0
+IT_wind_onshore_renewable,IT,wind_onshore,renewable,1.388854868,11175.89958,1,0,0,0
 NL_solar_renewable,NL,solar,renewable,0.97320782,4465.86,1,0,0,0
-NL_wind offshore_renewable,NL,wind offshore,renewable,5.615384615,2374.2,1,0,0,0
-NL_wind onshore_renewable,NL,wind onshore,renewable,1.395284752,5140.2,1,0,0,0
+NL_wind_offshore_renewable,NL,wind_offshore,renewable,5.615384615,2374.2,1,0,0,0
+NL_wind_onshore_renewable,NL,wind_onshore,renewable,1.395284752,5140.2,1,0,0,0
 NO_solar_renewable,NO,solar,renewable,0.987328023,30.65,1,0,0,0
-NO_wind onshore_renewable,NO,wind onshore,renewable,1.401255358,2851.3,1,0,0,0
+NO_wind_onshore_renewable,NO,wind_onshore,renewable,1.401255358,2851.3,1,0,0,0
 PL_solar_renewable,PL,solar,renewable,0.989138306,477.85,1,0,0,0
-PL_wind onshore_renewable,PL,wind onshore,renewable,1.402020821,7050.9,1,0,0,0
+PL_wind_onshore_renewable,PL,wind_onshore,renewable,1.402020821,7050.9,1,0,0,0
 SE_ror_renewable,SE,ror,renewable,1.83125987,1995,1,0,0,0
 SE_solar_renewable,SE,solar,renewable,0.01339609,742.43,1,0,0,0
-SE_wind offshore_renewable,SE,wind offshore,renewable,5.730769231,190.5,1,0,0,0
-SE_wind onshore_renewable,SE,wind onshore,renewable,1.005970606,6900.6,1,0,0,0
+SE_wind_offshore_renewable,SE,wind_offshore,renewable,5.730769231,190.5,1,0,0,0
+SE_wind_onshore_renewable,SE,wind_onshore,renewable,1.005970606,6900.6,1,0,0,0
 UK_ror_renewable,UK,ror,renewable,1.602337212,798.475,1,0,0,0
 UK_solar_renewable,UK,solar,renewable,0.998189718,16984.26,1,0,0,0
-UK_wind offshore_renewable,UK,wind offshore,renewable,5.884615385,8230.2,1,0,0,0
-UK_wind onshore_renewable,UK,wind onshore,renewable,1.324678506,16087.3,1,0,0,0
+UK_wind_offshore_renewable,UK,wind_offshore,renewable,5.884615385,8230.2,1,0,0,0
+UK_wind_onshore_renewable,UK,wind_onshore,renewable,1.324678506,16087.3,1,0,0,0
 FR_hydro_psp_water,FR,hydro_psp,water,10.32589286,5304,0.75,1,3480,405708.3987
 FR_hydro_res_water,FR,hydro_res,water,7.182550529,8938.456688,1,1,33,10565543.67
 AT_hydro_psp_water,AT,hydro_psp,water,10.45510204,3582.3,0.75,1,2255,1343532.026
