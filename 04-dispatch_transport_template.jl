@@ -284,10 +284,19 @@ result_EX = vcat(res_imp, res_exp)
 
 ###################################### mc_el ##############################
 result_mc = DataFrame(G, [:id, :hour])
+result_mc = result_mc[result_mc.value .!= 0, :]
 insertcols!(result_mc, 2, :mc_el => [map_id2mc_el[id] for id in result_mc[!,:id]])
-insertcols!(result_mc, 3, :technology => [map_id2tech[id] for id in result_mc[!,:id]])
-insertcols!(result_mc, 2, :zone => [map_id2country[id] for id in result_mc[!,:id]])
-res_mc_grouped_by_zone_hourly = combine(groupby(copy(result_mc), [:zone, :hour]), :mc_el .=> [mean, maximum])
+insertcols!(result_mc, 3, :zone => [map_id2country[id] for id in result_mc[!,:id]])
+
+
+result_balance_P = DataFrame(BALANCE_P, [:zone, :hour])
+result_balance_P = result_balance_P[result_balance_P.value .!= 0, :]
+
+insertcols!(result_balance_P, 2, :mc_el => 1000)
+select!(result_balance_P, Not(:value))
+result_mc = vcat(result_mc, result_balance_P)
+
+s_mc_grouped_by_zone_hourly = combine(groupby(copy(result_mc), [:zone, :hour]), :mc_el .=> [mean, maximum])
 res_mc_grouped_by_zone_year_mean = combine(groupby(res_mc_grouped_by_zone_hourly, :zone), :mc_el_mean .=> [mean, std])
 res_mc_grouped_by_zone_year_max = combine(groupby(res_mc_grouped_by_zone_hourly, :zone), :mc_el_maximum .=> [mean, std])
 
