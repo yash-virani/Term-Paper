@@ -118,6 +118,13 @@ function run_model(enable_2030::Bool, remove_fuels_list::Vector, ntc_factor,extr
     for plant_id in plants[:,:id] 
         map_id2tech[plant_id] = unique((plants[plants.id .== plant_id, "tech"]))[1]
     end
+        
+    map_id2tech  = Dict()
+    for plant_id in plants[:,:id] 
+        map_id2tech[plant_id] = ((plants[plants.id .== plant_id, "tech"]))[1]
+    end
+
+
     # Hyrdo Inflows
     psp_inflow = coldict(timeseries["hydro_psp_inflow_countries"])
     PSP_list = plants[plants[:,:tech] .== "hydro_psp", :id]
@@ -357,6 +364,7 @@ table3 = DataFrame(
 table3_name = string(enable_2030)*"_"*remove_string*"_"*string(ntc_factor)*"_"*string(extra_storage_factor)*"_"*"Country_ntc_import_export.csv"
 CSV.write(joinpath(results_path, table3_name), table3)
 
+# plotting load duration curve
 country = "DE"
 dem = elec_demand[country]
 feed = feed_in[country]
@@ -369,6 +377,21 @@ ldc_plot = plot_ldc2(dem, feed, wind_off, wind_on, pv, ror)
 
 ldc_name = string(enable_2030)*"_"*remove_string*"_"*string(ntc_factor)*"_"*string(extra_storage_factor)*"_"*"ldc_DE.png"
 savefig(ldc_plot,joinpath(results_path,ldc_name))
+
+# saving table with marginal cost data
+result_mc = DataFrame(G, [:id, :hour])
+insertcols!(result_mc, 2, :mc_el => [map_id2mc_el[id] for id in result_mc[!,:id]])
+insertcols!(result_mc, 3, :technology => [map_id2tech[id] for id in result_mc[!,:id]])
+insertcols!(result_mc, 2, :zone => [map_id2country[id] for id in result_mc[!,:id]])
+res_mc_grouped_by_zone_hourly = combine(groupby(copy(result_mc), [:zone, :hour]), :mc_el .=> [mean, maximum])
+res_mc_grouped_by_zone_year_mean = combine(groupby(res_mc_grouped_by_zone_hourly, :zone), :mc_el_mean .=> [mean, std])
+res_mc_grouped_by_zone_year_max = combine(groupby(res_mc_grouped_by_zone_hourly, :zone), :mc_el_maximum .=> [mean, std])
+
+res_mc_grouped_by_zone_year_mean_name = string(enable_2030)*"_"*remove_string*"_"*string(ntc_factor)*"_"*string(extra_storage_factor)*"_"*"res_mc_grouped_by_zone_year_mean.csv"
+res_mc_grouped_by_zone_year_max_name = string(enable_2030)*"_"*remove_string*"_"*string(ntc_factor)*"_"*string(extra_storage_factor)*"_"*"res_mc_grouped_by_zone_year_max.csv"
+CSV.write(joinpath(results_path,res_mc_grouped_by_zone_year_max_name), res_mc_grouped_by_zone_year_max)
+CSV.write(joinpath(results_path,res_mc_grouped_by_zone_year_mean_name), res_mc_grouped_by_zone_year_mean)
+
 end
 # set first as true for 2030 renewable values, second: list of fuels to remove, third: ntc faktor to be multiplied, fourth: extra storage to be added (factor)
 # setting the basic scenarios for fuel removal

@@ -6,6 +6,7 @@ using JuMP
 using Gurobi
 using Plots, StatsPlots
 using DataFrames, CSV 
+using Statistics
 #  Preprocessing
 ### data load ###
 # datapath = joinpath(@__DIR__, "data\\Dummy_Data")
@@ -108,6 +109,11 @@ end
 map_id2tech  = Dict()
 for plant_id in plants[:,:id] 
     map_id2tech[plant_id] = ((plants[plants.id .== plant_id, "tech"]))[1]
+end
+
+map_id2mc_el = Dict()
+for plant_id in plants[:,:id] 
+    v[plant_id] = ((plants[plants.id .== plant_id, "mc_el"]))[1]
 end
 # Hyrdo Inflows
 psp_inflow = coldict(timeseries["hydro_psp_inflow_countries"])
@@ -276,7 +282,25 @@ rename!(res_exp, :from_Z => :zone) # renaming the column to uniform 'zone' label
 # recombining the DFs import and export
 result_EX = vcat(res_imp, res_exp)
 
+###################################### mc_el ##############################
+result_mc = DataFrame(G, [:id, :hour])
+insertcols!(result_mc, 2, :mc_el => [map_id2mc_el[id] for id in result_mc[!,:id]])
+insertcols!(result_mc, 3, :technology => [map_id2tech[id] for id in result_mc[!,:id]])
+insertcols!(result_mc, 2, :zone => [map_id2country[id] for id in result_mc[!,:id]])
+res_mc_grouped_by_zone_hourly = combine(groupby(copy(result_mc), [:zone, :hour]), :mc_el .=> [mean, maximum])
+res_mc_grouped_by_zone_year_mean = combine(groupby(res_mc_grouped_by_zone_hourly, :zone), :mc_el_mean .=> [mean, std])
+res_mc_grouped_by_zone_year_max = combine(groupby(res_mc_grouped_by_zone_hourly, :zone), :mc_el_maximum .=> [mean, std])
 
+results_path = datapath
+enable_2030 = "TRUE"
+remove_string = "TEST"
+ntc_factor = 1
+extra_storage_factor = 0
+res_mc_grouped_by_zone_year_mean_name = string(enable_2030)*"_"*remove_string*"_"*string(ntc_factor)*"_"*string(extra_storage_factor)*"_"*"res_mc_grouped_by_zone_year_mean.csv"
+res_mc_grouped_by_zone_year_max_name = string(enable_2030)*"_"*remove_string*"_"*string(ntc_factor)*"_"*string(extra_storage_factor)*"_"*"res_mc_grouped_by_zone_year_max.csv"
+CSV.write(joinpath(results_path,res_mc_grouped_by_zone_year_max_name), res_mc_grouped_by_zone_year_max)
+CSV.write(joinpath(results_path,res_mc_grouped_by_zone_year_mean_name), res_mc_grouped_by_zone_year_mean)
+############################################################
 
 gen_by_tech = combine(groupby(result_G, [:zone, :technology, :hour]),
     :value => sum => :value)
