@@ -113,7 +113,7 @@ end
 
 map_id2mc_el = Dict()
 for plant_id in plants[:,:id] 
-    v[plant_id] = ((plants[plants.id .== plant_id, "mc_el"]))[1]
+    map_id2mc_el[plant_id] = ((plants[plants.id .== plant_id, "mc_el"]))[1]
 end
 # Hyrdo Inflows
 psp_inflow = coldict(timeseries["hydro_psp_inflow_countries"])
@@ -195,8 +195,6 @@ set_optimizer_attribute(m, "TimeLimit", 600)
     EX[z=Z,zz=Z,T] >= 0
     CU[Z,T] >= 0
     BALANCE_P[Z,T] >= 0
-
-
 end
 
 @objective(m, Min,

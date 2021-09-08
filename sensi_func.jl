@@ -383,6 +383,7 @@ result_mc = DataFrame(G, [:id, :hour])
 result_mc = result_mc[result_mc.value .!= 0, :]
 insertcols!(result_mc, 2, :mc_el => [map_id2mc_el[id] for id in result_mc[!,:id]])
 insertcols!(result_mc, 3, :zone => [map_id2country[id] for id in result_mc[!,:id]])
+select!(result_mc, Not([:value, :id]))
 
 result_balance_P = DataFrame(BALANCE_P, [:zone, :hour])
 result_balance_P = result_balance_P[result_balance_P.value .!= 0, :]
@@ -412,9 +413,10 @@ scenario_list = [[false, [], 1, 0, Time_steps], #1
                 ]
 # itterating through ntc and storage changes 
 # !!!!!!!!!! takes approx 2 to 3h !!!!!!!!!!!!!!!!!!
-for ntc_fac in [0.8,1,1.2], sto_fac in [0,0.5,1,3], scen in copy(scenario_list[2:end])
+for ntc_fac in [1,0.8,1.2], sto_fac in [0,0.5,1,3], scen in copy(scenario_list[2:end])
     scen[3] = ntc_fac
     scen[4] = sto_fac
     println(scen)
     run_model(scen...)
 end
+
