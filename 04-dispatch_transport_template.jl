@@ -27,14 +27,42 @@ for x in eachrow(plants), i in eachrow(renewables_2030)
 end
 
 ##################### Removing certain technologies (add to List "turn_of_fuel" to remove) ######################
-# turn_of_fuel = ["uran"]
-# for x in eachrow(plants)
-#     if x.fuel in turn_of_fuel
-#         x["g_max"] =  0
-#     end
-    
-# end
+fuel_reduction = ["uran", "lignite", "hard coal"]
+reduce_dict = Dict("uran" => 0.2, "lignite" => 0.2, "hard coal" => 0.7)
+for x in eachrow(plants)
+    if x.fuel in fuel_reduction
+        if (x.country == "PL") & (x.fuel == "hard coal")
+            x["g_max"] = x["g_max"] * 0.8
+        elseif (x.country == "PL") & (x.fuel == "lignite")
+            x["g_max"] = x["g_max"] * 0.7
+        elseif (x.country == "FR") & (x.fuel == "uran")
+            x["g_max"] =  x["g_max"] *0.7
+        else
+            x["g_max"] =  x["g_max"] * reduce_dict[x.fuel]
+        end
+    end
+end
+plants[plants.fuel .== "uran", :]
 
+scen_name =  "Mixed_FR_PL_exept"
+if scen_name == "Mixed_FR_PL_exept"
+    fuel_reduction = ["uran", "lignite", "hard coal"]
+    reduce_dict = Dict("uran" => 0.2, "lignite" => 0.2, "hard coal" => 0.7)
+    for x in eachrow(plants)
+        if x.fuel in fuel_reduction
+            if (x.country == "PL") & (x.fuel == "hard coal")
+                x["g_max"] = x["g_max"] * 0.8
+            elseif (x.country == "PL") & (x.fuel == "lignite")
+                x["g_max"] = x["g_max"] * 0.7
+            elseif (x.country == "FR") & (x.fuel == "uran")
+                x["g_max"] =  x["g_max"] *0.7
+            else
+                x["g_max"] =  x["g_max"] * reduce_dict[x.fuel]
+            end
+        end
+    end
+end
+plants[plants.fuel .== "uran",:]
 ############### Add new storage tech #######################
 # mc_el_sto = 20 # sets the marginal costs of the new storage in EUR per MWh
 # g_max_fac = 1 # sets the factor to multiply the max generation by (times cumulated generation capacity in country  divided by 100) 
@@ -43,20 +71,20 @@ end
 # storage_capacity_fac = 1 #  # sets the factor to multiply the max demand by (times cumulated generation capacity in country) 
 # for zone in unique(ntc_data[:,:from_country])
 #     sum_gen_cap = sum(plants[plants[:,:country] .== zone, :g_max])
-#     println(sum_gen_cap)
-#     push!(plants,[(zone*"_storage_NA") 
+#     push!(plants,
+#         [(zone*"_storage_NA") 
 #         zone 
 #         "undetermined Storage" 
 #         "NA" 
 #         mc_el_sto 
-#         g_max_fac*(sum_gen_cap/100) 
+#         g_max_fac*(sum_gen_cap/100) *3
 #         eta_sto 
 #         1 
-#         d_max_fac*(sum_gen_cap/100) 
-#         storage_capacity_fac * sum_gen_cap])
+#         d_max_fac*(sum_gen_cap/100) *3
+#         storage_capacity_fac * sum_gen_cap *3])
 # end
 #########################################################################################
-
+fac_ntc_TEMP = 1
 
 timeseries = Dict(splitext(files)[1] => CSV.read(joinpath(timeseries_path, files), DataFrame)
     for files in readdir(timeseries_path))
@@ -214,7 +242,7 @@ end
 
 # NTC upper-bound for exchange between zones (lower bound not need as ntc is declared as greater than 0) 
 @constraint(m, Exchange[z=Z, zz=Z, t=T], 
-    EX[z,zz,t] <= ((z,zz) in keys(ntc) ? ntc[z,zz] : 0));
+    EX[z,zz,t] <= ((z,zz) in keys(ntc) ? ntc[z,zz]*fac_ntc_TEMP : 0));
 
 
 @constraint(m, StorageLevel[s=S, t=T],
@@ -262,7 +290,7 @@ insertcols!(result_G, 3, :technology => [map_id2tech[id] for id in result_G[!,:i
 # Creating new result DF to collect exchanges between zones
 result_EX_data = DataFrame(EX, [:from_Z, :to_Z, :hour] )
 # Filtering out entries from and to same zone (as thos will by definition allways be 0)
-result_EX_data = result_EX_data[result_EX_data.from_Z .!= result_EX_data.to_Z, :]
+# result_EX_data = result_EX_data[result_EX_data.from_Z .!= result_EX_data.to_Z, :]
 
 # dividing the exchange to only import data
 res_imp = copy(result_EX_data) # fetching a copy to not alter the orginal DF
@@ -285,11 +313,13 @@ result_mc = DataFrame(G, [:id, :hour])
 result_mc = result_mc[result_mc.value .!= 0, :]
 insertcols!(result_mc, 2, :mc_el => [map_id2mc_el[id] for id in result_mc[!,:id]])
 insertcols!(result_mc, 3, :zone => [map_id2country[id] for id in result_mc[!,:id]])
+select!(result_mc, Not([:value, :id]))
 
 
 result_balance_P = DataFrame(BALANCE_P, [:zone, :hour])
 result_balance_P = result_balance_P[result_balance_P.value .!= 0, :]
-
+result_balance_P[result_balance_P.zone .== "FR", :]
+unique(result_balance_P.zone)
 insertcols!(result_balance_P, 2, :mc_el => 1000)
 select!(result_balance_P, Not(:value))
 result_mc = vcat(result_mc, result_balance_P)
@@ -385,12 +415,13 @@ function plot_energybalance(df_gen::DataFrame, df_dem::DataFrame, df_ex::DataFra
     return p
 end
 
-result_generation[result_generation[:,:zone] .== "DE",:]
-endhour = 7*24
-gen_short = result_generation[result_generation[:,:hour] .∈ [1:endhour],:]
-dem_short = result_demand[result_demand[:,:hour] .∈ [1:endhour],:]
-EX_short = result_EX[result_EX[:,:hour] .∈ [1:endhour],:]
-z1 = plot_energybalance(gen_short, dem_short, EX_short,"DE");
+# result_generation[result_generation[:,:zone] .== "DE",:]
+starthour = 7*24*30
+endhour =  starthour + 7*24
+gen_short = result_generation[result_generation[:,:hour] .∈ [starthour:endhour],:]
+dem_short = result_demand[result_demand[:,:hour] .∈ [starthour:endhour],:]
+EX_short = result_EX[result_EX[:,:hour] .∈ [starthour:endhour],:]
+z1 = plot_energybalance(gen_short, dem_short, EX_short,"FR")
 savefig("results_z1.pdf")
 z2 = plot_energybalance(result_generation, result_demand, result_EX, "z2");
 savefig("results_z2.pdf")
@@ -595,3 +626,58 @@ function plot_ldc2(dem, feed, wind_off, wind_on, pv, ror)
     
     return p
 end
+
+
+
+ntc_time = dictzip(result_EX_data, [:from_Z, :to_Z, :hour] => :value)
+
+table2 = DataFrame(
+    (from_zone = z,
+    to_zone = zz,
+    ntc_max = ntc[z,zz],
+    avg_sum_year = sum(ntc_time[z,zz,t] for t in T)/8760,
+    utilisation_percent =  ntc[z,zz] != 0 ? (sum(ntc_time[z,zz,t] for t in T)/8760)/ntc[z,zz] : 0,
+    utilisation_equal100 = ntc[z,zz] != 0 ? sum(ntc[z,zz] == ntc_time[z,zz,t] ? 1 : 0 for t in T)/8760 : 0,
+    utilisation_bigger90 = ntc[z,zz] != 0 ? sum(ntc[z,zz]*0.9 <= ntc_time[z,zz,t] ? 1 : 0 for t in T)/8760 : 0,
+    )
+    for z in Z, zz in Z if z!=zz
+)
+table2_name = string(enable_2030)*"_"*remove_string*"_"*string(ntc_factor)*"_"*string(extra_storage_factor)*"_"*"FromTo_ntc_utilisation.csv"
+
+line_constrains_map_name = string(enable_2030)*"_"*remove_string*"_"*string(ntc_factor)*"_"*string(extra_storage_factor)*"_"*"line_constrain_map.csv"
+
+CSV.write(joinpath(results_path,line_constrains_map_name), line_constrains_map)
+
+function create_line_constrain_map(result_EX_data, ntc)
+    line_constrains_map = copy(result_EX_data)
+    line_constrains_map = line_constrains_map[line_constrains_map.from_Z .!= line_constrains_map.to_Z, :]
+    ntc_max_collection = []
+    constrained_coll = []
+    counrty_set_coll = []
+    for row in eachrow(line_constrains_map)
+        append!(ntc_max_collection,ntc[(row.from_Z, row.to_Z)])
+        append!(constrained_coll, ntc[(row.from_Z, row.to_Z)] == row.value ? 1 : 0)
+        append!(counrty_set_coll, [sort([row.from_Z, row.to_Z])])
+    end
+    insertcols!(line_constrains_map, 4, :ntc_max => ntc_max_collection )
+    insertcols!(line_constrains_map, 5, :constrained => constrained_coll )
+    insertcols!(line_constrains_map, 6, :country_sets => counrty_set_coll ) 
+    line_constrains_map = line_constrains_map[(line_constrains_map.ntc_max .!= 0), :]
+
+    line_constrains_map = combine(groupby(copy(line_constrains_map), [:country_sets, :hour]), :constrained .=> [maximum])
+    line_constrains_map = combine(groupby(copy(line_constrains_map), [:country_sets]), :constrained_maximum .=> [mean])
+    insertcols!(line_constrains_map, 1, :from => [x[1] for x in line_constrains_map.country_sets])
+    insertcols!(line_constrains_map, 2, :to => [x[2] for x in line_constrains_map.country_sets])
+    select!(line_constrains_map, Not(:country_sets))
+    return line_constrains_map
+end
+
+line_constrains_map_name = string(enable_2030)*"_"*remove_string*"_"*string(ntc_factor)*"_"*string(extra_storage_factor)*"_"*"line_constrain_map.csv"
+CSV.write(joinpath(results_path,line_constrains_map_name), line_constrains_map)
+
+obj_val_name = string(enable_2030)*"_"*remove_string*"_"*string(ntc_factor)*"_"*string(extra_storage_factor)*"_"*"objective_value.csv"
+ob_val = DataFrame("Objective value:" => objective_value(m))
+CSV.write(joinpath(results_path,obj_val_name), ob_val)
+
+
+

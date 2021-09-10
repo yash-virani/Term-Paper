@@ -1,0 +1,30 @@
+fromZ,toZ,ntc_max
+Switzerland,Austria,850
+Czechia,Austria,1220
+Germany,Austria,2850
+Italy,Austria,2242.5
+Germany,Belgium,850
+France,Belgium,2470
+Netherlands,Belgium,1750
+United Kingdom,Belgium,3000
+Switzerland,Germany,3475
+France,Switzerland,1925
+Italy,Switzerland,1855
+Germany,Czechia,1950
+Poland,Czechia,1750
+Denmark,Germany,2532.5
+France,Germany,2150
+Netherlands,Germany,4425
+Norway,Germany,1450
+Poland,Germany,1850
+Sweden,Germany,1007.5
+Netherlands,Denmark,850
+Norway,Denmark,1270
+Sweden,Denmark,2640
+France,Spain,1707.5
+Italy,France,2537.5
+United Kingdom,France,1400
+Norway,Netherlands,1305
+United Kingdom,Netherlands,1100
+Sweden,Norway,2497.5
+Sweden,Poland,417.5

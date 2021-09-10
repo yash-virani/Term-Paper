@@ -1,0 +1,30 @@
+from_zone,to_zone,ntc_max
+Switzerland,Austria,850.0
+Czechia,Austria,1220.0
+Germany,Austria,2850.0
+Italy,Austria,2242.5
+Germany,Belgium,850.0
+France,Belgium,2470.0
+Netherlands,Belgium,1750.0
+United Kingdom,Belgium,3000.0
+Germany,Switzerland,3475.0
+France,Switzerland,1925.0
+Italy,Switzerland,1855.0
+Germany,Czechia,1950.0
+Poland,Czechia,1750.0
+Denmark,Germany,2532.5
+France,Germany,2150.0
+Netherlands,Germany,4425.0
+Norway,Germany,1450.0
+Poland,Germany,1850.0
+Sweden,Germany,1007.5
+Netherlands,Denmark,850.0
+Norway,Denmark,1270.0
+Sweden,Denmark,2640.0
+France,Spain,1707.5
+Italy,France,2537.5
+United Kingdom,France,1400.0
+Norway,Netherlands,1305.0
+United Kingdom,Netherlands,1100.0
+Sweden,Norway,2497.5
+Sweden,Poland,417.5

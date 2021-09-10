@@ -1,12 +1,151 @@
-function run_model(enable_2030::Bool, remove_fuels_list::Vector, ntc_factor,extra_storage_factor, Time_steps::Int)
+using JuMP
+using Gurobi
+using Plots, StatsPlots
+using DataFrames, CSV 
+using Statistics
+
+### utility functions ###
+function dictzip(df::DataFrame, x::Pair)
+    dictkeys = zipcols(df, x[1])
+    dictvalues = zipcols(df, x[2])
+    return zip(dictkeys, dictvalues) |> collect |> Dict
+end
+coldict(df::DataFrame) = Dict(string(name) => Vector(vec) for (name,vec) in pairs(eachcol(df)))
+generic_names(len::Int) = [Symbol("x$i") for i in 1:len]
+zipcols(df::DataFrame, x::Symbol) = df[:,x] |> Vector
+zipcols(df::DataFrame, x::Vector) = zip(eachcol(df[:,x])...) |> collect
+
+### sucessor: give the next index of an array, return 1 for the last element###
+successor(arr, x) = x == length(arr) ? 1 : x + 1
+
+function DataFrame(x::JuMP.Containers.DenseAxisArray,
+    names::AbstractVector{Symbol}=generic_names(length(x.axes));
+    kwargs...)
+
+    if length(names) != length(x.axes)
+        throw(ArgumentError("Length of argument 'names' is $(length(names)) and
+        does not fit the variable's dimension of $(length(x.axes))"))
+    end
+
+    push!(names, :value)
+
+    iter = Iterators.product(x.axes...) |> collect |> vec
+    df = DataFrame([(i..., value(x[i...])) for i in iter])
+    rename!(df, names)
+    return df
+end
+
+function plot_ldc2(dem, feed, wind_off, wind_on, pv, ror)
+    
+    resid_load_data = DataFrame(load = dem,
+                                feedin = feed,
+                                feed_in_wind_off = wind_off,
+                                feed_in_wind_on = wind_on,
+                                feed_in_pv = pv,
+                                feed_in_ror = ror
+                                )
+   
+
+    df_copy = copy(resid_load_data)
+    df_copy[!, :residual_load] = df_copy[!, :load] .- df_copy[!,:feedin]
+    df_copy[!, :load_wo_wind] = df_copy[!, :load] .- df_copy[!,:feed_in_wind_on] .- df_copy[!,:feed_in_wind_off]
+    df_copy[!, :load_wo_wind_pv] = df_copy[!, :load_wo_wind] .- df_copy[!,:feed_in_pv]
+    
+    sorted_load = sort(df_copy[!,:load], rev=true)
+    sorted_residual = sort(df_copy[!,:residual_load], rev=true)
+    sorted_load_wo_wind = sort(df_copy[!,:load_wo_wind], rev=true)
+    sorted_load_wo_wind_pv = sort(df_copy[!,:load_wo_wind_pv], rev=true)
+
+
+    total_load = sum(df_copy[!,:load])
+    rl = df_copy[!,:residual_load]
+    pos_rl = filter(x-> x >= 0, rl)
+    share = sum(rl / total_load)
+    share_pos = sum(pos_rl / total_load)
+    
+    p = plot(
+        sorted_load,
+        color=:black,
+        width=3,
+        label="Load",
+        xlabel="Number of hours",
+        ylabel="MW",
+        fillrange=sorted_load_wo_wind,
+        fillcolor=:lightblue,
+        fillalpha=0.2,
+        leg=:outerbottom,
+        title="Share of nondispatchable generation of total load: $(round(Int, 100*(1 - share))) % \n load covered bei nondispatchable generation: $(round(Int, 100*(1 - share_pos))) %",
+        titlefontsize=6
+    )
+
+    plot!(p,
+        sorted_load_wo_wind,
+        color=:black,
+        width=1,
+        label="Load with wind infeed",
+        xlabel="Number of hours",
+        ylabel="MW",
+        fillrange=sorted_residual,
+        fillcolor=:yellow,
+        fillalpha=0.2)
+
+    plot!(p,
+        sorted_load_wo_wind_pv,
+        color=:black,
+        width=1,
+        label="Load with solar and wind infeed",
+        xlabel="Number of hours",
+        ylabel="MW",
+        fillrange=sorted_residual,
+        fillcolor=:darkblue,
+        fillalpha=0.2)
+
+    plot!(p,
+        sorted_residual,
+        color=:black,
+        width=2,
+        label="Residual load with solar, wind and ror infeed",
+        xlabel="Number of hours",
+        ylabel="MW",
+        fill=0,
+        fillcolor=:red,
+        fillalpha=0.2)
+    
+    hline!([0], width=2, color = :black, label="")
+    
+    return p
+end
+
+function create_line_constrain_map(result_EX_data, ntc)
+    line_constrains_map = copy(result_EX_data)
+    line_constrains_map = line_constrains_map[line_constrains_map.from_Z .!= line_constrains_map.to_Z, :]
+    ntc_max_collection = []
+    constrained_coll = []
+    counrty_set_coll = []
+    for row in eachrow(line_constrains_map)
+        append!(ntc_max_collection,ntc[(row.from_Z, row.to_Z)])
+        append!(constrained_coll, ntc[(row.from_Z, row.to_Z)] == row.value ? 1 : 0)
+        append!(counrty_set_coll, [sort([row.from_Z, row.to_Z])])
+    end
+    insertcols!(line_constrains_map, 4, :ntc_max => ntc_max_collection )
+    insertcols!(line_constrains_map, 5, :constrained => constrained_coll )
+    insertcols!(line_constrains_map, 6, :country_sets => counrty_set_coll ) 
+    line_constrains_map = line_constrains_map[(line_constrains_map.ntc_max .!= 0), :]
+
+    line_constrains_map = combine(groupby(copy(line_constrains_map), [:country_sets, :hour]), :constrained .=> [maximum])
+    line_constrains_map = combine(groupby(copy(line_constrains_map), [:country_sets]), :constrained_maximum .=> [mean])
+    insertcols!(line_constrains_map, 1, :from => [x[1] for x in line_constrains_map.country_sets])
+    insertcols!(line_constrains_map, 2, :to => [x[2] for x in line_constrains_map.country_sets])
+    select!(line_constrains_map, Not(:country_sets))
+    return line_constrains_map
+end
+
+function run_model(enable_2030::Bool, scen_name::String, ntc_factor,extra_storage_factor, Time_steps::Int)
     results_path  = joinpath(@__DIR__, "Results")
     if !isdir(results_path)
         mkdir(results_path)
     end
-    remove_string = "WO_"
-    for x in remove_fuels_list
-        remove_string = remove_string*"_"*x
-    end
+
 
     #  Preprocessing
     ### data load ###
@@ -30,15 +169,43 @@ function run_model(enable_2030::Bool, remove_fuels_list::Vector, ntc_factor,extr
         end
     end
 
-    ##################### Removing certain technologies (add to List "turn_of_fuel" to remove) ######################
-    turn_of_fuel = remove_fuels_list
-    for x in eachrow(plants)
-        if x.fuel in turn_of_fuel
-            x["g_max"] =  0
+    ##################### Fuel reduction according to scenario ######################
+    if scen_name == "Mixed_FR_PL_exept"
+        fuel_reduction = ["uran", "lignite", "hard coal"]
+        reduce_dict = Dict("uran" => 0.2, "lignite" => 0.2, "hard coal" => 0.7)
+        for x in eachrow(plants)
+            if x.fuel in fuel_reduction
+                if (x.country == "PL") & (x.fuel == "hard coal")
+                    x["g_max"] = x["g_max"] * 0.8
+                elseif (x.country == "PL") & (x.fuel == "lignite")
+                    x["g_max"] = x["g_max"] * 0.7
+                elseif (x.country == "FR") & (x.fuel == "uran")
+                    x["g_max"] =  x["g_max"] *0.7
+                else
+                    x["g_max"] =  x["g_max"] * reduce_dict[x.fuel]
+                end
+            end
         end
-        
     end
 
+    if scen_name == "Atomkraft_Nein_Danke"
+        for x in eachrow(plants)    
+            for x in eachrow(plants)
+                if x.fuel == "uran"
+                    x["g_max"] = 0
+                end
+            end
+        end
+    end
+
+    if scen_name == "Minus_50"
+        fuel_reduction = ["uran", "lignite", "hard coal"]
+        for x in eachrow(plants)
+            if x.fuel in fuel_reduction
+                x["g_max"] =  x["g_max"] * 0.5
+            end
+        end
+    end
     ############### Add new storage tech #######################
     if extra_storage_factor != 0
         mc_el_sto = 20 # sets the marginal costs of the new storage in EUR per MWh
@@ -81,21 +248,8 @@ function run_model(enable_2030::Bool, remove_fuels_list::Vector, ntc_factor,extr
     S = plants[plants[:,:storage_capacity] .!= 0, :id]
     Z = unique(ntc_data[:,:from_country])
     CU = plants[plants[:,:tech] .== "CU", :id] |> Vector
-    CU_NEG = plants[plants[:,:tech] .== "CU_neg", :id] |> Vector
 
     ### parameters ###
-
-    ### utility functions and mappings ###
-    zipcols(df::DataFrame, x::Symbol) = df[:,x] |> Vector
-    zipcols(df::DataFrame, x::Vector) = zip(eachcol(df[:,x])...) |> collect
-
-    function dictzip(df::DataFrame, x::Pair)
-        dictkeys = zipcols(df, x[1])
-        dictvalues = zipcols(df, x[2])
-        return zip(dictkeys, dictvalues) |> collect |> Dict
-    end
-
-    coldict(df::DataFrame) = Dict(string(name) => Vector(vec) for (name,vec) in pairs(eachcol(df)))
 
     ### Static Parameters ###
     mc = dictzip(plants, :id => :mc_el)
@@ -119,9 +273,9 @@ function run_model(enable_2030::Bool, remove_fuels_list::Vector, ntc_factor,extr
         map_id2tech[plant_id] = unique((plants[plants.id .== plant_id, "tech"]))[1]
     end
         
-    map_id2tech  = Dict()
+    map_id2mc_el  = Dict()
     for plant_id in plants[:,:id] 
-        map_id2tech[plant_id] = ((plants[plants.id .== plant_id, "tech"]))[1]
+        map_id2mc_el[plant_id] = ((plants[plants.id .== plant_id, "mc_el"]))[1]
     end
 
 
@@ -132,7 +286,6 @@ function run_model(enable_2030::Bool, remove_fuels_list::Vector, ntc_factor,extr
     RES_list = plants[plants[:,:tech] .== "hydro_res", :id]
 
     ### time series ###
-    coldict(df::DataFrame) = Dict(string(name) => Vector(vec) for (name,vec) in pairs(eachcol(df)))
 
     elec_demand = coldict(timeseries["demand_2015"])
 
@@ -186,8 +339,6 @@ function run_model(enable_2030::Bool, remove_fuels_list::Vector, ntc_factor,extr
         feed_in_by_z_nondisp[x,"solar"] = feed_in_pv[x]
     end
 
-    ### sucessor: give the next index of an array, return 1 for the last element###
-    successor(arr, x) = x == length(arr) ? 1 : x + 1
 
     ### ntc ###
     ntc = dictzip(ntc_data, [:from_country, :to_country] => :ntc)
@@ -292,10 +443,10 @@ gen_by_tech2 = combine(groupby(result_feedin, [:zone, :technology, :hour]),
 result_CU = DataFrame(CU, [:zone, :hour])
 result_CU[!,:technology] .= "curtailment"
 
-############################### BALANCE_P muss noch im weiteren aufgenommen werden ######################################
-result_BALANCE_P = DataFrame(BALANCE_P, [:zone, :hour])
-result_BALANCE_P[!,:technology] .= "Balancing_Power"
-############################### BALANCE_P muss noch im weiteren aufgenommen werden ######################################
+# ############################### BALANCE_P muss noch im weiteren aufgenommen werden ######################################
+# result_BALANCE_P = DataFrame(BALANCE_P, [:zone, :hour])
+# result_BALANCE_P[!,:technology] .= "Balancing_Power"
+# ############################### BALANCE_P muss noch im weiteren aufgenommen werden ######################################
 
 result_D = DataFrame(D_stor, [:id, :hour])
 insertcols!(result_D, 2, :zone => [map_id2country[id] for id in result_D[!,:id]])
@@ -325,7 +476,7 @@ table2 = DataFrame(
     )
     for z in Z, zz in Z if z!=zz
 )
-table2_name = string(enable_2030)*"_"*remove_string*"_"*string(ntc_factor)*"_"*string(extra_storage_factor)*"_"*"FromTo_ntc_utilisation.csv"
+table2_name = string(enable_2030)*"_"*scen_name*"_"*string(ntc_factor)*"_"*string(extra_storage_factor)*"_"*"FromTo_ntc_utilisation.csv"
 
 CSV.write(joinpath(results_path,table2_name), table2)
 
@@ -361,7 +512,7 @@ table3 = DataFrame(
     for z in Z
 )
 
-table3_name = string(enable_2030)*"_"*remove_string*"_"*string(ntc_factor)*"_"*string(extra_storage_factor)*"_"*"Country_ntc_import_export.csv"
+table3_name = string(enable_2030)*"_"*scen_name*"_"*string(ntc_factor)*"_"*string(extra_storage_factor)*"_"*"Country_ntc_import_export.csv"
 CSV.write(joinpath(results_path, table3_name), table3)
 
 # plotting load duration curve
@@ -375,10 +526,10 @@ ror = haskey(feed_in_ror, country) ?  feed_in_ror[country] : zeros(length(T))
 
 ldc_plot = plot_ldc2(dem, feed, wind_off, wind_on, pv, ror)
 
-ldc_name = string(enable_2030)*"_"*remove_string*"_"*string(ntc_factor)*"_"*string(extra_storage_factor)*"_"*"ldc_DE.png"
+ldc_name = string(enable_2030)*"_"*scen_name*"_"*string(ntc_factor)*"_"*string(extra_storage_factor)*"_"*"ldc_DE.png"
 savefig(ldc_plot,joinpath(results_path,ldc_name))
 
-# saving table with marginal cost data
+# fetching mc results from generation of model
 result_mc = DataFrame(G, [:id, :hour])
 result_mc = result_mc[result_mc.value .!= 0, :]
 insertcols!(result_mc, 2, :mc_el => [map_id2mc_el[id] for id in result_mc[!,:id]])
@@ -388,32 +539,53 @@ select!(result_mc, Not([:value, :id]))
 result_balance_P = DataFrame(BALANCE_P, [:zone, :hour])
 result_balance_P = result_balance_P[result_balance_P.value .!= 0, :]
 
+# adding coss of 1000 EUR for the balance power / load shedding 
 insertcols!(result_balance_P, 2, :mc_el => 1000)
 select!(result_balance_P, Not(:value))
 result_mc = vcat(result_mc, result_balance_P)
 
+# saving table with highest marginal cost in each and zone (merit oder)
 res_mc_grouped_by_zone_hourly = combine(groupby(copy(result_mc), [:zone, :hour]), :mc_el .=> [mean, maximum])
 res_mc_grouped_by_zone_year_mean = combine(groupby(res_mc_grouped_by_zone_hourly, :zone), :mc_el_mean .=> [mean, std])
 res_mc_grouped_by_zone_year_max = combine(groupby(res_mc_grouped_by_zone_hourly, :zone), :mc_el_maximum .=> [mean, std])
 
-res_mc_grouped_by_zone_year_mean_name = string(enable_2030)*"_"*remove_string*"_"*string(ntc_factor)*"_"*string(extra_storage_factor)*"_"*"res_mc_grouped_by_zone_year_mean.csv"
-res_mc_grouped_by_zone_year_max_name = string(enable_2030)*"_"*remove_string*"_"*string(ntc_factor)*"_"*string(extra_storage_factor)*"_"*"res_mc_grouped_by_zone_year_max.csv"
+res_mc_grouped_by_zone_year_mean_name = string(enable_2030)*"_"*scen_name*"_"*string(ntc_factor)*"_"*string(extra_storage_factor)*"_"*"res_mc_grouped_by_zone_year_mean.csv"
+res_mc_grouped_by_zone_year_max_name = string(enable_2030)*"_"*scen_name*"_"*string(ntc_factor)*"_"*string(extra_storage_factor)*"_"*"res_mc_grouped_by_zone_year_max.csv"
 CSV.write(joinpath(results_path,res_mc_grouped_by_zone_year_max_name), res_mc_grouped_by_zone_year_max)
 CSV.write(joinpath(results_path,res_mc_grouped_by_zone_year_mean_name), res_mc_grouped_by_zone_year_mean)
 
+
+# saving the line constrains for the map creation
+line_constrains_map = create_line_constrain_map(result_EX_data, ntc)
+line_constrains_map_name = string(enable_2030)*"_"*scen_name*"_"*string(ntc_factor)*"_"*string(extra_storage_factor)*"_"*"line_constrain_map.csv"
+CSV.write(joinpath(results_path,line_constrains_map_name), line_constrains_map)
+
+# saving the objective value
+obj_val_name = string(enable_2030)*"_"*scen_name*"_"*string(ntc_factor)*"_"*string(extra_storage_factor)*"_"*"objective_value.csv"
+ob_val = DataFrame("Objective value:" => objective_value(m))
+CSV.write(joinpath(results_path,obj_val_name), ob_val)
+
+# saving the balanceing power / loadshedding inteances
+result_balance_P = DataFrame(BALANCE_P, [:zone, :hour])
+result_balance_P = result_balance_P[result_balance_P.value .!= 0, :]
+balance_P_name = string(enable_2030)*"_"*scen_name*"_"*string(ntc_factor)*"_"*string(extra_storage_factor)*"_"*"balance_power.csv"
+CSV.write(joinpath(results_path,balance_P_name), result_balance_P)
 end
 # set first as true for 2030 renewable values, second: list of fuels to remove, third: ntc faktor to be multiplied, fourth: extra storage to be added (factor)
 # setting the basic scenarios for fuel removal
 Time_steps = 8760
-scenario_list = [[false, [], 1, 0, Time_steps], #1
-                [true, [], 1, 0, Time_steps], #2
-                [true, ["uran"], 1 ,0, Time_steps], #3
-                [true, ["uran", "lignite"], 1, 0, Time_steps], #4
-                [true, ["uran", "lignite", "hard coal"], 1, 0, Time_steps], #5
-                ]
-# itterating through ntc and storage changes 
-# !!!!!!!!!! takes approx 2 to 3h !!!!!!!!!!!!!!!!!!
-for ntc_fac in [1,0.8,1.2], sto_fac in [0,0.5,1,3], scen in copy(scenario_list[2:end])
+# scenario_list = [[false, "Base", 1, 0, Time_steps], #1
+#                 [true, "Base", 1, 0, Time_steps], #2
+#                 [true, "Minus_50", 1 ,0, Time_steps], #3
+#                 [true, "Atomkraft_Nein_Danke", 1, 0, Time_steps], #4
+#                 [true, "Mixed_FR_PL_exept", 1, 0, Time_steps], #5
+#                 ]
+scenario_list = [true, "Atomkraft_Nein_Danke", 1, 0, Time_steps]
+
+
+# itterating through scearios + ntc and storage changes 
+# !!!!!!!!!! takes approx 4-5h !!!!!!!!!!!!!!!!!!
+for ntc_fac in [1,0.8,1.2], sto_fac in [0,0.5,1,3], scen in copy(scenario_list)
     scen[3] = ntc_fac
     scen[4] = sto_fac
     println(scen)
