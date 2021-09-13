@@ -574,14 +574,12 @@ end
 # set first as true for 2030 renewable values, second: list of fuels to remove, third: ntc faktor to be multiplied, fourth: extra storage to be added (factor)
 # setting the basic scenarios for fuel removal
 Time_steps = 8760
-# scenario_list = [[false, "Base", 1, 0, Time_steps], #1
-#                 [true, "Base", 1, 0, Time_steps], #2
-#                 [true, "Minus_50", 1 ,0, Time_steps], #3
-#                 [true, "Atomkraft_Nein_Danke", 1, 0, Time_steps], #4
-#                 [true, "Mixed_FR_PL_exept", 1, 0, Time_steps], #5
-#                 ]
-scenario_list = [true, "Atomkraft_Nein_Danke", 1, 0, Time_steps]
-
+scenario_list = [[false, "Base", 1, 0, Time_steps], #1
+                [true, "Base", 1, 0, Time_steps], #2
+                [true, "Minus_50", 1 ,0, Time_steps], #3
+                [true, "Atomkraft_Nein_Danke", 1, 0, Time_steps], #4
+                [true, "Mixed_FR_PL_exept", 1, 0, Time_steps], #5
+                ]
 
 # itterating through scearios + ntc and storage changes 
 # !!!!!!!!!! takes approx 4-5h !!!!!!!!!!!!!!!!!!
@@ -591,4 +589,14 @@ for ntc_fac in [1,0.8,1.2], sto_fac in [0,0.5,1,3], scen in copy(scenario_list)
     println(scen)
     run_model(scen...)
 end
+
+scen = [true, "Atomkraft_Nein_Danke", 1, 0, Time_steps]
+for ntc_fac in [1,0.8,1.2], sto_fac in [0,0.5,1,3]
+    scen[3] = ntc_fac
+    scen[4] = sto_fac
+    println(scen)
+    run_model(scen...)
+end
+
+
 
