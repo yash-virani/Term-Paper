@@ -5,22 +5,22 @@ using DataFrames, CSV
 using Statistics
 
 ### utility functions ###
+zipcols(df::DataFrame, x::Symbol) = df[:,x] |> Vector
+
+zipcols(df::DataFrame, x::Vector) = zip(eachcol(df[:,x])...) |> collect
+
+coldict(df::DataFrame) = Dict(string(name) => Vector(vec) for (name,vec) in pairs(eachcol(df)))
+
+### sucessor: give the next index of an array, return 1 for the last element###
+successor(arr, x) = x == length(arr) ? 1 : x + 1
+
+generic_names(len::Int) = [Symbol("x$i") for i in 1:len]
+
 function dictzip(df::DataFrame, x::Pair)
     dictkeys = zipcols(df, x[1])
     dictvalues = zipcols(df, x[2])
     return zip(dictkeys, dictvalues) |> collect |> Dict
 end
-
-coldict(df::DataFrame) = Dict(string(name) => Vector(vec) for (name,vec) in pairs(eachcol(df)))
-
-generic_names(len::Int) = [Symbol("x$i") for i in 1:len]
-
-zipcols(df::DataFrame, x::Symbol) = df[:,x] |> Vector
-
-zipcols(df::DataFrame, x::Vector) = zip(eachcol(df[:,x])...) |> collect
-
-### sucessor: give the next index of an array, return 1 for the last element###
-successor(arr, x) = x == length(arr) ? 1 : x + 1
 
 function DataFrame(x::JuMP.Containers.DenseAxisArray,
     names::AbstractVector{Symbol}=generic_names(length(x.axes));
@@ -38,6 +38,7 @@ function DataFrame(x::JuMP.Containers.DenseAxisArray,
     rename!(df, names)
     return df
 end
+
 
 function plot_ldc2(dem, feed, wind_off, wind_on, pv, ror)
     
@@ -539,7 +540,7 @@ CSV.write(joinpath(results_path, balance_P_name), result_balance_P)
 end
 # set first as true for 2030 renewable values, second: list of fuels to remove, third: ntc faktor to be multiplied, fourth: extra storage to be added (factor)
 # setting the basic scenarios for fuel removal
-Time_steps = 50
+Time_steps = 8760
 scenario_list = [[false, "Base", 1, 0, Time_steps], #1
                 [true, "Base", 1, 0, Time_steps], #2
                 [true, "Minus_50", 1 ,0, Time_steps], #3
