@@ -17,7 +17,7 @@ static_path = joinpath(datapath, "static")
 
 plants =  CSV.read(joinpath(static_path,"plants.csv"), DataFrame)
 ntc_data =  CSV.read(joinpath(static_path,"ntc.csv"), DataFrame)
-
+plants[plants.tech .== "ror", "g_max"]
 ############### switch this on for 2030 renewable capacity values #######################
 renewables_2030 = CSV.read(joinpath(static_path,"renewables_2030.csv"), DataFrame)
 for x in eachrow(plants), i in eachrow(renewables_2030)
@@ -27,42 +27,42 @@ for x in eachrow(plants), i in eachrow(renewables_2030)
 end
 
 ##################### Removing certain technologies (add to List "turn_of_fuel" to remove) ######################
-fuel_reduction = ["uran", "lignite", "hard coal"]
-reduce_dict = Dict("uran" => 0.2, "lignite" => 0.2, "hard coal" => 0.7)
-for x in eachrow(plants)
-    if x.fuel in fuel_reduction
-        if (x.country == "PL") & (x.fuel == "hard coal")
-            x["g_max"] = x["g_max"] * 0.8
-        elseif (x.country == "PL") & (x.fuel == "lignite")
-            x["g_max"] = x["g_max"] * 0.7
-        elseif (x.country == "FR") & (x.fuel == "uran")
-            x["g_max"] =  x["g_max"] *0.7
-        else
-            x["g_max"] =  x["g_max"] * reduce_dict[x.fuel]
-        end
-    end
-end
-plants[plants.fuel .== "uran", :]
+# fuel_reduction = ["uran", "lignite", "hard coal"]
+# reduce_dict = Dict("uran" => 0.2, "lignite" => 0.2, "hard coal" => 0.7)
+# for x in eachrow(plants)
+#     if x.fuel in fuel_reduction
+#         if (x.country == "PL") & (x.fuel == "hard coal")
+#             x["g_max"] = x["g_max"] * 0.8
+#         elseif (x.country == "PL") & (x.fuel == "lignite")
+#             x["g_max"] = x["g_max"] * 0.7
+#         elseif (x.country == "FR") & (x.fuel == "uran")
+#             x["g_max"] =  x["g_max"] *0.7
+#         else
+#             x["g_max"] =  x["g_max"] * reduce_dict[x.fuel]
+#         end
+#     end
+# end
+# plants[plants.fuel .== "uran", :]
 
-scen_name =  "Mixed_FR_PL_exept"
-if scen_name == "Mixed_FR_PL_exept"
-    fuel_reduction = ["uran", "lignite", "hard coal"]
-    reduce_dict = Dict("uran" => 0.2, "lignite" => 0.2, "hard coal" => 0.7)
-    for x in eachrow(plants)
-        if x.fuel in fuel_reduction
-            if (x.country == "PL") & (x.fuel == "hard coal")
-                x["g_max"] = x["g_max"] * 0.8
-            elseif (x.country == "PL") & (x.fuel == "lignite")
-                x["g_max"] = x["g_max"] * 0.7
-            elseif (x.country == "FR") & (x.fuel == "uran")
-                x["g_max"] =  x["g_max"] *0.7
-            else
-                x["g_max"] =  x["g_max"] * reduce_dict[x.fuel]
-            end
-        end
-    end
-end
-plants[plants.fuel .== "uran",:]
+# scen_name =  "Mixed_FR_PL_exept"
+# if scen_name == "Mixed_FR_PL_exept"
+#     fuel_reduction = ["uran", "lignite", "hard coal"]
+#     reduce_dict = Dict("uran" => 0.2, "lignite" => 0.2, "hard coal" => 0.7)
+#     for x in eachrow(plants)
+#         if x.fuel in fuel_reduction
+#             if (x.country == "PL") & (x.fuel == "hard coal")
+#                 x["g_max"] = x["g_max"] * 0.8
+#             elseif (x.country == "PL") & (x.fuel == "lignite")
+#                 x["g_max"] = x["g_max"] * 0.7
+#             elseif (x.country == "FR") & (x.fuel == "uran")
+#                 x["g_max"] =  x["g_max"] *0.7
+#             else
+#                 x["g_max"] =  x["g_max"] * reduce_dict[x.fuel]
+#             end
+#         end
+#     end
+# end
+# plants[plants.fuel .== "uran",:]
 ############### Add new storage tech #######################
 # mc_el_sto = 20 # sets the marginal costs of the new storage in EUR per MWh
 # g_max_fac = 1 # sets the factor to multiply the max generation by (times cumulated generation capacity in country  divided by 100) 
@@ -93,15 +93,14 @@ timeseries = Dict(splitext(files)[1] => CSV.read(joinpath(timeseries_path, files
 ### create sets based on input data ###
 
 ### sets ###
-T = 1:size(timeseries["demand_2015"], 1) |> collect
-# T = 1:700 |> collect
+# T = 1:size(timeseries["demand_2015"], 1) |> collect
+T = 1:500 |> collect
 TECH = unique(plants[:,:id] |> Vector)
 DISP = unique(plants[plants[:,:disp] .== 1, :id])
 NONDISP =  unique(plants[plants[:,:disp] .== 0, :id])
 S = plants[plants[:,:storage_capacity] .!= 0, :id]
 Z = unique(ntc_data[:,:from_country])
-CU = plants[plants[:,:tech] .== "CU", :id] |> Vector
-CU_NEG = plants[plants[:,:tech] .== "CU_neg", :id] |> Vector
+
 
 ### parameters ###
 
@@ -238,7 +237,7 @@ end
     + BALANCE_P[z,t]
     + sum(EX[zz,z,t] - EX[z,zz,t] for zz in Z)
     ==
-    elec_demand[z][t])
+    elec_demand[z][t]);
 
 # NTC upper-bound for exchange between zones (lower bound not need as ntc is declared as greater than 0) 
 @constraint(m, Exchange[z=Z, zz=Z, t=T], 
